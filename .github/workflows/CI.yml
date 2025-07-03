@@ -34,4 +34,4 @@ jobs:
       - name: Run pytest
         run: |
           .chatvenv\Scripts\activate
-          pytest --maxfail=1 --disable-warnings -q
+          pytest tests --maxfail=1 --disable-warnings -q
