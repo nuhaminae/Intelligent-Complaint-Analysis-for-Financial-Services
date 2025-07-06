@@ -32,4 +32,5 @@
 
 This project is currently in development. Contributions are welcome!
 
-![CI](https://github.com/nuhaminae/Intelligent-Complaint-Analysis-for-Financial-Services/actions/workflows/CI.yml/badge.svg)
+
+[![CI](https://github.com/nuhaminae/Intelligent-Complaint-Analysis-for-Financial-Services/actions/workflows/CI.yml/badge.svg)](https://github.com/nuhaminae/Intelligent-Complaint-Analysis-for-Financial-Services/actions/workflows/CI.yml)
