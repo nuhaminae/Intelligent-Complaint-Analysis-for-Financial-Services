@@ -206,15 +206,15 @@ def test_filter_products(dummy_data):
 
     # Define the expected unique products after filtering
     expected_products = [
-        'Credit card', 'Credit card or prepaid card',
-        'Payday loan, little loan, or personal loan',
-        'Payday loan, title loan, personal loan, or advance loan',
-        'Consumer loan',
-        'Money transfer',
-        'Money transfer, virtual currency, or money service',
-        'Checking or savings account',
-        'Other financial service'
-    ]
+        'Credit card', 'Credit card or prepaid card',               #credit card
+        'Payday loan, title loan, or personal loan',                #personal loan
+        'Payday loan, title loan, personal loan, or advance loan',  #personal loan
+        'Money transfers',                                          #money transfer
+        'Money transfer, virtual currency, or money service',       #money transfer
+        'Checking or savings account',                              #savings account
+        'Payday loan',                                              #Payday loan
+        'Other financial service'                                   #other financial service
+            ]
 
     # Assert that the unique values in the 'Product' column are within the expected list
     unique_filtered_products = eda_instance.df['Product'].unique().tolist()
