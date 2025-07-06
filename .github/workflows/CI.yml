@@ -27,6 +27,10 @@ jobs:
           .\.chatvenv\Scripts\python.exe -m pip install --upgrade pip
           .\.chatvenv\Scripts\python.exe -m pip install -r requirements.txt
 
+      - name: Download NLTK data
+        run: |
+          .\.chatvenv\Scripts\python.exe -m nltk.downloader stopwords wordnet punkt omw-1.4
+
       - name: Run tests
         run: python --version
 
