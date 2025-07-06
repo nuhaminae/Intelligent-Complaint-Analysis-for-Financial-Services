@@ -74,9 +74,11 @@ def test_load_df(dummy_data):
     # Assert that df_raw is loaded and is not None
     assert eda_instance.df_raw is not None
 
-    # Assert the shape of the loaded DataFrame
-    expected_shape = (200, 18)
-    assert eda_instance.df_raw.shape == expected_shape
+    # Assert shape
+    assert eda_instance.df_raw.shape == (200, 18)
+
+    # Assert column names are title-cased
+    assert all(col == col.title() for col in eda_instance.df_raw.columns)
 
     # Assert the column names and their case
     expected_columns = [
@@ -87,6 +89,18 @@ def test_load_df(dummy_data):
         'Timely Response?', 'Consumer Disputed?','Complaint Id'
     ]
     assert eda_instance.df_raw.columns.tolist() == expected_columns
+
+# Test load df method with invalid path
+def test_load_df_with_invalid_path():
+    eda = EDA(df_path="nonexistent.csv")
+    assert eda.df_raw is None
+
+# Test clean narrative method
+def test_clean_narrative():
+    raw_text = "Dear CFPB, I am writing to file a complaint about my CREDIT CARD being charged twice!"
+    cleaned = EDA.clean_narrative(raw_text)
+    assert "credit" in cleaned and "card" in cleaned
+    assert "dear" not in cleaned and "cfpb" not in cleaned
 
 # Test visualise complaint method
 def test_visualise_complaint(dummy_data):
@@ -109,6 +123,16 @@ def test_visualise_complaint(dummy_data):
         # Ensure the argument is a string and contains the expected filename
         assert isinstance(args[0], str), f"Expected a string path, got: {type(args[0])}"
         assert os.path.basename(args[0]) == plot_name, f"Expected filename '{plot_name}', got: {os.path.basename(args[0])}"
+
+# Test isualise complaint method with invalid df path
+def test_visualise_complaint_without_df():
+    eda = EDA(df_path=None)
+    eda.df_raw = None
+    with mock.patch('builtins.print') as mock_print:
+        result = eda.visualise_complaint()
+        assert result is None
+        printed = [" ".join(str(arg) for arg in call.args) for call in mock_print.call_args_list]
+        assert any("DataFrame not loaded" in msg for msg in printed)
 
 # Test visualise complaint length method
 def test_visualise_complaint_length(dummy_data):
@@ -289,3 +313,13 @@ def test_save_df(dummy_data):
         assert any("Processed DataFrame saved to:" in msg for msg in printed)
         assert any("DataFrame Head:" in msg for msg in printed)
         assert any("Processed DataFrame shape:" in msg for msg in printed)
+
+# Test save df method with invalid df path
+def test_save_df_without_df():
+    eda = EDA(df_path=None, plot_dir=".", df_dir=".")
+    eda.df = None
+    with mock.patch('builtins.print') as mock_print:
+        result = eda.save_df()
+        assert result is None
+        printed = [" ".join(str(arg) for arg in call.args) for call in mock_print.call_args_list]
+        assert any("No processed DataFrame found" in msg for msg in printed)
