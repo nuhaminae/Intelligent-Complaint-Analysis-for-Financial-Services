@@ -31,6 +31,13 @@ class EDA:
         if self.df_path:
             self.load_df()
     
+    @staticmethod
+    def safe_relpath(path, start=os.getcwd()):
+        try:
+            return os.path.relpath(path, start)
+        except ValueError:
+            return path  # fallback to absolute path if on different drives
+        
     def load_df (self):
         """
         Load DataFrame and understand the structure of the dataset
@@ -38,7 +45,7 @@ class EDA:
         """
 
         # Calculate DataFrame relative path 
-        rel_df_path = os.path.relpath(self.df_path, os.getcwd())
+        rel_df_path = self.safe_relpath(self.df_path)
 
         if self.df_path:
             try:
@@ -80,7 +87,7 @@ class EDA:
             self.df_raw = None
 
         return self.df_raw
-    
+
     def save_plot(self, plot_name):
         """
         Saves the current plot to the designated plot folder.
@@ -93,13 +100,11 @@ class EDA:
             os.makedirs(self.plot_dir)
             
         plot_path = os.path.join(self.plot_dir, plot_name)
-            
-        #calculate the relative path
-        relative_plot_path = os.path.relpath(plot_path, os.getcwd())
+        rel_plot_path = self.safe_relpath(plot_path)
             
         try:
             plt.savefig(plot_path)
-            print(f'\nPlot saved to {relative_plot_path}')
+            print(f'\nPlot saved to {rel_plot_path}')
         except Exception as e:
             print(f'\nError saving plot: {e}')
     
@@ -332,14 +337,13 @@ class EDA:
             os.makedirs(self.df_dir)
             
         df_name = os.path.join(self.df_dir, filename)
-            
-        # Calculate the relative path
-        relative_path = os.path.relpath(df_name, os.getcwd())
+
+        rel_df_path = self.safe_relpath(df_name)
             
         # Sort and save processed DataFrame to CSV
         self.df = self.df[sorted(self.df.columns)]
         self.df.to_csv(df_name, index=False)
-        print(f'\nProcessed DataFrame saved to: {relative_path}')
+        print(f'\nProcessed DataFrame saved to: {rel_df_path}')
 
         print('\nDataFrame Head:')
         display (self.df.head())
