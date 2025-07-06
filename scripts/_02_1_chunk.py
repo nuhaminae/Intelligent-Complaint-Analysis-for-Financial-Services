@@ -9,7 +9,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 class Chunking:
     def __init__(self, df_path, plot_dir = None, df_dir = None):
         """
-        Initiate ChunkingEmbedding class from DataFrame path.
+        Initiate Chunking class from DataFrame path.
 
         Args:
             df_path (str): The path to the DataFrame file (e.g., CSV).
