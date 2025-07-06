@@ -15,18 +15,18 @@ stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
 class EDA:
-    def __init__(self, df_path, plot_path = None, df_dir = None):
+    def __init__(self, df_path, plot_dir = None, df_dir = None):
         """
         Initiate EDA class from DataFrame path.
 
         Args:
             df_path (str): The path to the DataFrame file (e.g., CSV).
-            plot_path (str, optional): The directory to save plots. Defaults to None.
+            plot_dir (str, optional): The directory to save plots. Defaults to None.
             df_dir (str, optional): The directory to save processed DataFrames. Defaults to None.
         """
 
         self.df_path = df_path
-        self.plot_path = plot_path
+        self.plot_dir = plot_dir
         self.df_dir = df_dir
         if self.df_path:
             self.load_df()
@@ -89,10 +89,10 @@ class EDA:
             plot_name (str): The name of the plot file (including extension, e.g., '.png').
         """
         #create the directory if it doesn't exist
-        if not os.path.exists(self.plot_path):
-            os.makedirs(self.plot_path)
+        if not os.path.exists(self.plot_dir):
+            os.makedirs(self.plot_dir)
             
-        plot_path = os.path.join(self.plot_path, plot_name)
+        plot_path = os.path.join(self.plot_dir, plot_name)
             
         #calculate the relative path
         relative_plot_path = os.path.relpath(plot_path, os.getcwd())
