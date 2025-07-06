@@ -263,12 +263,12 @@ class EDA:
             # Define the products of interest
             products_of_interest = [
                 'Credit card', 'Credit card or prepaid card',               #credit card
-                'Payday loan, little loan, or personal loan',               #personal loan
+                'Payday loan, title loan, or personal loan',                #personal loan
                 'Payday loan, title loan, personal loan, or advance loan',  #personal loan
-                'Consumer loan',                                            #personal loan
-                'Money transfer',                                           #money transfer
+                'Money transfers',                                          #money transfer
                 'Money transfer, virtual currency, or money service',       #money transfer
                 'Checking or savings account',                              #savings account
+                'Payday loan',                                              #Payday loan
                 'Other financial service'                                   #other financial service
             ]
             
