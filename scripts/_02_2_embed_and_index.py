@@ -4,6 +4,11 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 import chromadb
 from chromadb.utils import embedding_functions
+from packaging import version
+
+if version.parse(chromadb.__version__) < version.parse("0.4.0"):
+    raise RuntimeError("Please upgrade ChromaDB to >= 0.4.0 for compatibility.")
+
 
 class EmbeddingIndexer:
     """
@@ -13,7 +18,13 @@ class EmbeddingIndexer:
     def __init__(self, df_chunks_path, vector_store_dir="vector_store/", model_name="all-MiniLM-L6-v2"):
         """
         Initialise the EmbeddingIndexer with paths and model configuration.
-
+        This class is designed for use with ChromaDB's PersistentClient (v0.4.0 or higher),
+            which automatically handles persistence to disk. It assumes that:
+            
+            - The vector store is either empty or isolated (no deduplication is performed).
+            - The collection name is fixed as 'complaints_chunks'.
+            - The embedding function is compatible with the SentenceTransformer model specified.
+            - ChromaDB >= 0.4.0 is installed; earlier versions are not supported.
         Args:
             df_chunks_path (str): Path to the chunked DataFrame file (CSV).
             vector_store_dir (str): Directory to persist the ChromaDB vector store.
@@ -36,10 +47,14 @@ class EmbeddingIndexer:
         )
 
         # Create or get collection
-        self.collection = self.client.get_or_create_collection(
-            name="complaints_chunks",
-            embedding_function=self.embedding_fn
-        )
+        try:
+            self.collection = self.client.get_or_create_collection(
+                name="complaints_chunks",
+                embedding_function=self.embedding_fn
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to create or retrieve ChromaDB collection: {e}")
+
 
     @staticmethod
     def safe_relpath(path, start=os.getcwd()):
@@ -82,59 +97,53 @@ class EmbeddingIndexer:
 
         return self.df_chunks
 
-    def index_chunks(self):
+    def index_chunks(self, batch_size=500):
         """
-        Embed and index the complaint chunks into ChromaDB.
-        Skips chunks that have already been indexed by checking existing IDs.
+        Embed and index the complaint chunks into ChromaDB in batches.
+        Skips indexing if the collection already contains data.
+
+        Args:
+            batch_size (int): Number of chunks to index per batch. Defaults to 500.
         """
         if self.df_chunks is None:
             raise ValueError("DataFrame not loaded. Run load_chunks() first.")
 
-        print("Fetching existing IDs from ChromaDB...")
-        existing_ids = set()
-
+        # Check if collection already contains data
         try:
-            # ChromaDB does not support listing all IDs directly,
-            # so fetch in batches using pagination
-            offset = 0
-            batch_size = 1000
-            while True:
-                results = self.collection.get(
-                    include=["ids"],
-                    limit=batch_size,
-                    offset=offset
-                )
-                if not results["ids"]:
-                    break
-                existing_ids.update(results["ids"])
-                offset += batch_size
+            existing_count = self.collection.count()
+            if existing_count > 0:
+                print(f"Skipping indexing: collection already contains {existing_count} chunks.")
+                print(f"\nVector store saved to: {self.safe_relpath(self.vector_store_dir)}")
+                return
         except Exception as e:
-            print(f"Warning: Could not fetch existing IDs. Proceeding without deduplication. Error: {e}")
+            print(f"Warning: Could not check collection count. Proceeding anyway. Error: {e}")
 
-        print(f"\nFound {len(existing_ids)} existing chunks. Starting indexing...")
+        print(f"\nIndexing {len(self.df_chunks)} chunks into ChromaDB in batches of {batch_size}...")
 
-        skipped = 0
+        documents, metadatas, ids = [], [], []
         added = 0
 
         for i, row in tqdm(self.df_chunks.iterrows(), total=len(self.df_chunks)):
             chunk_id = f"chunk-{i}"
-            if chunk_id in existing_ids:
-                skipped += 1
-                continue
+            documents.append(row["Chunk"])
+            metadatas.append(row.to_dict())
+            ids.append(chunk_id)
 
-            chunk_text = row["Chunk"]
-            metadata = row.to_dict()
+            if len(documents) == batch_size:
+                try:
+                    self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
+                    added += len(documents)
+                except Exception as e:
+                    print(f"\nFailed to add batch ending at chunk-{i}: {e}")
+                documents, metadatas, ids = [], [], []
 
+        # Add any remaining chunks
+        if documents:
             try:
-                self.collection.add(
-                    documents=[chunk_text],
-                    metadatas=[metadata],
-                    ids=[chunk_id]
-                )
-                added += 1
+                self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
+                added += len(documents)
             except Exception as e:
-                print(f"\nFailed to add chunk-{i}: {e}")
+                print(f"\nFailed to add final batch: {e}")
 
-        self.client.persist()
-        print(f"\nIndexing complete. Added: {added}, Skipped: {skipped}")
+        print(f"\nIndexing complete. Total chunks added: {added}")
         print(f"\nVector store saved to: {self.safe_relpath(self.vector_store_dir)}")
