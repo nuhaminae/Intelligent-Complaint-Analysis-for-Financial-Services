@@ -115,3 +115,48 @@ def test_index_chunks(dummy_data):
     #  Check that the collection is populated
     count = embedding_instance.collection.count()
     assert count == 200, f"Expected 200 indexed chunks, but got {count}"
+
+# Test search chunks method
+def test_search_chunks(dummy_data):
+    file_path = dummy_data
+    vector_store_dir = tempfile.mkdtemp()
+    embedding_instance = EmbeddingIndexer(df_chunks_path=file_path, vector_store_dir=vector_store_dir)
+    embedding_instance.load_chunks()
+    embedding_instance.index_chunks(batch_size=50)
+
+    results = embedding_instance.search_chunks(query="unauthorized charges", n_results=5)
+    assert results is not None, "Search should return results"
+    assert "documents" in results, "Search result should contain 'documents'"
+    assert len(results["documents"][0]) > 0, "Should return at least one document"
+
+# Test format search results method
+def test_format_search_results(dummy_data):
+    file_path = dummy_data
+    vector_store_dir = tempfile.mkdtemp()
+    embedding_instance = EmbeddingIndexer(df_chunks_path=file_path, vector_store_dir=vector_store_dir)
+    embedding_instance.load_chunks()
+    embedding_instance.index_chunks(batch_size=50)
+
+    results = embedding_instance.search_chunks(query="loan terms", n_results=3)
+    df = embedding_instance.format_search_results(results)
+    assert isinstance(df, pd.DataFrame), "Formatted result should be a DataFrame"
+    assert "Chunk ID" in df.columns, "Formatted DataFrame should contain 'Chunk ID'"
+    assert "Chunk Text" in df.columns, "Formatted DataFrame should contain 'Chunk Text'"
+
+# Test run batch queries grouped method
+def test_run_batch_queries_grouped(dummy_data):
+    file_path = dummy_data
+    vector_store_dir = tempfile.mkdtemp()
+    embedding_instance = EmbeddingIndexer(df_chunks_path=file_path, vector_store_dir=vector_store_dir)
+    embedding_instance.load_chunks()
+    embedding_instance.index_chunks(batch_size=50)
+
+    query_product_pairs = [
+        ("unauthorized charges", "Credit card", "Credit Cards"),
+        ("loan repayment issues", "Personal loan", "Personal Loans"),
+        ("account closed", "Savings account", "Savings Accounts")
+    ]
+
+    results = embedding_instance.run_batch_queries_grouped(query_product_pairs, n_results=2)
+    assert isinstance(results, dict), "Results should be a dictionary"
+    assert all(isinstance(v, pd.DataFrame) for v in results.values()), "Each result should be a DataFrame"
