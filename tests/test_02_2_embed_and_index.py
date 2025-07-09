@@ -11,7 +11,6 @@ import warnings
 from langchain_core.documents import Document
 warnings.filterwarnings("ignore", message=".*FigureCanvasAgg is non-interactive.*")
 
-
 # Add project path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
