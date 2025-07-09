@@ -6,14 +6,15 @@
 Intelligent Complaint Analysis for Financial Services is an advanced platform tailored for the automatic analysis, categorisation, and reporting of customer complaints within the financial sector. The system aims to streamline the identification of key issues, sentiment, and trends in customer feedback by leveraging natural language processing (NLP) and machine learning techniques. Ultimately the complaint analysis system helps financial institutions to improve their service quality and regulatory compliance.
 
 ## Key Features
-- Explaratory data analysis
-- Customisable text chunking strategy with overlap control. 
+- Exploratory data analysis across product categories and complaint structure
+- Customisable text chunking strategy with overlap control.
+- SentenceTransformer embeddings using `all-MiniLM-L6-v2`.
+- Semantic search over ChromaDB with retrievable metadata. 
 - Embedding via sentence-transformers/all-MiniLM-L6-v2.
-- Semantic search over chunked complaint narratives using ChromaDB
-- RAG pipeline for question answering with context-aware LLM prompts.
-- Interactive UI (Gradio/Streamlit) for non-technical users.
-- Persistent vector store with metadata for traceability.
-- CI-integrated test suite for reproducibility and robustness
+- RAG pipeline powered by LangChain with refined prompt engineering.
+- Interactive Gradio UI with real-time querying and context display.
+- Evaluation matrix with quality scores and commentary.
+- CI-integrated test suite for reproducibility and robustness.
 
 ## Table of Contents
 - [Project Background](#project-background)
@@ -45,12 +46,15 @@ The repository is organised as follows:
 ├──.github/workflows
 ├── data/
 │   ├── raw/                         # Original CFPB dataset
-│   └── processed/                   # Processed datase
-│       ├── filtered_complaints.csv      
-|       └── chunked_complaints.csv
+│   ├── processed/                   # Processed datase
+│   |   ├── filtered_complaints.csv      
+|   |   └── chunked_complaints.csv
+│   └── evaluation/
+│       ├── rag_evaluation.csv       # Manual scoring
+│       └── rag_evaluation.md        # Markdown table
 ├── notebooks/                       # Notebooks
-|   ├──01_eda_preprocessing.ipynb
-|   ├──02_1_chunking.ipynb
+|   ├── 01_eda_preprocessing.ipynb
+|   ├── 02_1_chunking.ipynb
 |   └── ...
 ├── plots/
 ├── scripts/
@@ -64,6 +68,7 @@ The repository is organised as follows:
 ├── vector_store/                    # Persisted ChromaDB index (excluded from Git)
 ├── .dvcignore
 ├── .gitignore
+├── app.py
 ├── README.md
 └── requirements.txt
 ```
@@ -119,10 +124,27 @@ The repository is organised as follows:
 4. **Scripts and Tests**
    - Explore `scripts/` and `tests/` directory to interact with script and test suits.
 
+5. **Interactive APP** 
+   ```
+   python app.py
+   ```
+   - Features:
+      - Input box for natural-language questions
+      - Answer powered by RAG + semantic retrieval
+      - Source chunks displayed beneath answer
+      - Optional streaming with token-by-token output
+6. **Evaluation Table**
+   - Located at `data/evaluation/rag_evaluation.csv`. It includes: 
+      - Questions used
+      - Answers generated
+      - Source documents pulled
+      - Manual score (1–5)
+      - Commentary
+
 ## Contribution
 Contributions are welcome! Please fork the repository and submit a pull request. For major changes, open an issue first to discuss what you’d like to change.
 
 Make sure to follow best practices for version control, testing, and documentation.
 
 ## Project Status
-This project is currently in development. Checkout the commit history [here](https://github.com/nuhaminae/Intelligent-Complaint-Analysis-for-Financial-Services/commits?author=nuhaminae). 
+Final submission merged. Checkout the commit history [here](https://github.com/nuhaminae/Intelligent-Complaint-Analysis-for-Financial-Services/commits?author=nuhaminae). 
