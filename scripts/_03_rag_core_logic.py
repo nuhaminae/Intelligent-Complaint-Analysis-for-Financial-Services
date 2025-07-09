@@ -6,9 +6,15 @@ from transformers import pipeline
 from difflib import get_close_matches
 from tqdm import tqdm
 import pandas as pd
+from langchain_openai import ChatOpenAI
 from difflib import SequenceMatcher
 import re
 import os
+
+# To Load OpenAI key
+from dotenv import load_dotenv
+load_dotenv() 
+openai_api_key = os.getenv('OPENAI_API_KEY')
 
 class RAGPipeline:
     """
@@ -50,6 +56,8 @@ Answer:""")
 
 
         self.llm = HuggingFacePipeline(pipeline=pipeline("text2text-generation", model=llm_model_name, max_length=256))
+        #self.llm = ChatOpenAI(model_name="gpt-3.5-turbo", streaming=True)
+
         '''
         self.qa_chain = RetrievalQA.from_chain_type(llm=self.llm, retriever=self.retriever,
                                                     chain_type="stuff",
