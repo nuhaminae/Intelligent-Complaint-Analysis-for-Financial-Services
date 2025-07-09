@@ -1,3 +1,4 @@
 .chatvenv
 __pycache__
 *\vector store
+.env
