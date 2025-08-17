@@ -283,7 +283,7 @@ def test_filter_products(dummy_data):
         "Money transfers",  # money transfer
         "Money transfer, virtual currency, or money service",  # money transfer
         "Checking or savings account",  # savings account
-        "Payday loan",  # Payday loan
+        "Payday loan",  # payday loan
         "Other financial service",  # other financial service
     ]
 
