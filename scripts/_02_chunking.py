@@ -3,12 +3,14 @@
 import os
 
 import matplotlib.pyplot as plt
+import nltk
 import pandas as pd
 import seaborn as sns
 from IPython.display import display
 from nltk.tokenize import sent_tokenize
-import nltk
-nltk.download('punkt_tab')
+
+nltk.download("punkt_tab")
+
 
 class Chunking:
     def __init__(self, df_path, plot_dir=None, processed_dir=None):
@@ -73,14 +75,10 @@ class Chunking:
                     self.df["Date Sent To Company"], errors="coerce"
                 )
 
-            print(
-                f"📥 DataFrame loaded from  {self.safe_relpath(self.df_path)}"
-            )
+            print(f"📥 DataFrame loaded from  {self.safe_relpath(self.df_path)}")
 
         except FileNotFoundError as e:
-            print(
-                f"⚠️ Error loading DataFrame : {e}"
-            )
+            print(f"⚠️ Error loading DataFrame : {e}")
             raise e
 
         return self.df
@@ -231,9 +229,7 @@ class Chunking:
         """
 
         if not hasattr(self, "df_chunks") or self.df_chunks is None:
-            print(
-                "\n⚠️ No DataFrame found. Please ensure DataFrame is loaded correctly"
-            )
+            print("\n⚠️ No DataFrame found. Please ensure DataFrame is loaded correctly")
             return
 
         # Create output folder if it doesn't exist
