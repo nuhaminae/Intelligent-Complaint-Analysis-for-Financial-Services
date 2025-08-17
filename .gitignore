@@ -1,5 +1,30 @@
-.chatvenv
-__pycache__
-*\vector store
-.env
-.vscode
+# .gitignore
+
+# Python bytecode and caches
+__pycache__/
+.pytest_cache/
+
+# Virtual environment
+.chatvenv/
+
+# DVC
+/.dvc/tmp
+/.dvc/cache
+
+# VS Code workspace and extensions
+.vscode/
+
+# CSV files
+*.csv
+
+# Logs
+*.log
+logs/
+
+# Build leftovers
+*.tmp
+
+# Caches
+.cache/
+
+vector store/
