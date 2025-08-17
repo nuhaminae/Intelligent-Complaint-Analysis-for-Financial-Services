@@ -16,6 +16,7 @@ stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
 
 
+
 class EDA:
     def __init__(self, df_path, plot_dir=None, processed_dir=None):
         """
@@ -108,6 +109,7 @@ class EDA:
 
         return self.df_raw
 
+
     @staticmethod
     def clean_narrative(text):
         if pd.isna(text):
@@ -194,11 +196,11 @@ class EDA:
         plt.show()
         plt.close()
 
-
     def visualise_complaint_length(self):
         """
         Visualise the length of complaints in the 'Consumer Complaint Narrative' column.
         """
+
         if not hasattr(self, "df_raw") or self.df_raw is None:
             print("⚠️ DataFrame not loaded. Please check initialisation.")
             return None
@@ -224,7 +226,7 @@ class EDA:
             )
             plt.savefig(plot_path)
             print(f"\n💾 Plot saved to {self.safe_relpath(plot_path)}")
-
+            
         plt.show()
         plt.close()
 
@@ -291,6 +293,7 @@ class EDA:
                 "Other financial service",  # other financial service
             ]
 
+
             # Filter the DataFrame
             self.df = self.df_raw[
                 self.df_raw["Product"].isin(products_of_interest)
@@ -344,6 +347,7 @@ class EDA:
             )
             return
 
+
         # Change  column to lower case
         self.df["Clean Consumer Complaint Narrative"] = self.df[
             "Consumer Complaint Narrative"
@@ -371,7 +375,7 @@ class EDA:
 
         # Sort and save processed DataFrame to CSV
         self.df = self.df[sorted(self.df.columns)]
-
+        
         df_name = os.path.join(self.processed_dir, filename)
         self.df.to_csv(df_name, index=False)
 

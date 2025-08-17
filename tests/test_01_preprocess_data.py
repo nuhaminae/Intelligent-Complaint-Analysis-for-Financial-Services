@@ -22,7 +22,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # trunk-ignore(ruff/E402)
 from scripts._01_preprocess_data import EDA
 
-
 @pytest.fixture
 def dummy_data():
 
@@ -144,6 +143,7 @@ def test_load_df(dummy_data):
     assert eda_instance.df_raw.columns.tolist() == expected_columns
 
 
+
 # Test load df method with invalid path
 def test_load_df_with_invalid_path():
     with pytest.raises(FileNotFoundError):
@@ -159,6 +159,7 @@ def test_clean_narrative():
     assert "dear" not in cleaned and "cfpb" not in cleaned
 
 
+
 # Test visualise complaint method
 def test_visualise_complaint(dummy_data):
     file_path = dummy_data
@@ -172,7 +173,6 @@ def test_visualise_complaint(dummy_data):
         mock.patch("matplotlib.pyplot.show"),
         mock.patch("matplotlib.pyplot.savefig") as mock_savefig,
     ):
-
         eda_instance.visualise_complaint()
 
         # Assert that savefig was called
@@ -184,6 +184,7 @@ def test_visualise_complaint(dummy_data):
         assert (
             os.path.basename(args[0]) == plot_name
         ), f"Expected filename '{plot_name}', got: {os.path.basename(args[0])}"
+
 
 
 # Test visualise complaint method with invalid df path
