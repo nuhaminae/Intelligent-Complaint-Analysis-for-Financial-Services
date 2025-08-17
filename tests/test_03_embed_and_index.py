@@ -125,4 +125,4 @@ def test_preview_results_output(dummy_chunked_csv, capsys):
     indexer.preview_results(query="loan terms", k=2)
     captured = capsys.readouterr()
     assert "--- Result 1 ---" in captured.out
-    assert "Chunk:" in captured.out
+    assert "Chunk :" in captured.out

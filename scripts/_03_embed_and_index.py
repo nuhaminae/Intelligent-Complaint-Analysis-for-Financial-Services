@@ -47,6 +47,25 @@ class LangchainIndexer:
         if self.df_chunks_path:
             self.load_chunks()
 
+    def safe_relpath(self, path, start=None):
+        """
+        Return a relative path, handling cases where paths are on different drives.
+
+        Args:
+            path (str): The path to make relative.
+            start (str, optional): The starting directory.
+                                    Defaults to current working directory.
+
+        Returns:
+            str: The relative path if possible, otherwise the original path.
+        """
+        try:
+            return os.path.relpath(path, start)
+        except ValueError:
+            # Fallback to absolute path if on different drives
+            return path
+
+
     def load_chunks(self):
         """
         Load the chunked DataFrame from CSV.
@@ -60,7 +79,7 @@ class LangchainIndexer:
 
             if "Chunk" not in self.df_chunks.columns:
                 raise ValueError(" Missing 'Chunk' column in the DataFrame.")
-            print(f"\n📥 Loaded {len(self.df_chunks)} chunks from {self.df_chunks_path}")
+            print(f"\n📥 Loaded {len(self.df_chunks)} chunks from {self.safe_relpath(self.df_chunks_path)}")
         except Exception as e:
             print(f"\n⚠️ Error loading DataFrame: {e}")
             self.df_chunks = None
@@ -116,12 +135,12 @@ class LangchainIndexer:
                 failed_batches.append(batch_num)
 
         # self.vectorstore.persist()
-        print(f"\n💾 Vector store saved to: {self.vector_store_dir}\n")
+        print(f"\n💾 Vector store saved to: {self.safe_relpath(self.vector_store_dir)}\n")
 
         if failed_batches:
             with open(failed_log_path, "w") as f:
                 json.dump(failed_batches, f)
-            print(f"\n⚠️ Failed batches logged to: {failed_log_path}")
+            print(f"\n⚠️ Failed batches logged to: {self.safe_relpath(failed_log_path)}")
         else:
             print("✅ All batches indexed successfully.")
 
