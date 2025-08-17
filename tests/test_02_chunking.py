@@ -118,7 +118,9 @@ def test_chunking_instance_creation(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    chunking_instance = Chunking(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    chunking_instance = Chunking(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
     assert chunking_instance is not None
 
 
@@ -127,7 +129,9 @@ def test_load_df(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    chunking_instance = Chunking(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    chunking_instance = Chunking(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     assert chunking_instance.df is not None
     assert len(chunking_instance.df) == 200
@@ -144,7 +148,9 @@ def test_chunk_narrative(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    chunking_instance = Chunking(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    chunking_instance = Chunking(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     df_chunks = chunking_instance.chunk_narrative()
     assert df_chunks is not None
@@ -156,7 +162,9 @@ def test_plot_chunk_lengths(dummy_data, tmp_path):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    chunking_instance = Chunking(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    chunking_instance = Chunking(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     chunking_instance.chunk_narrative()
     chunking_instance.plot_chunk_lengths()
@@ -168,7 +176,9 @@ def test_save_df(dummy_data, tmp_path):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    chunking_instance = Chunking(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    chunking_instance = Chunking(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     chunking_instance.chunk_narrative()
     chunking_instance.save_df("test_output.csv")

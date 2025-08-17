@@ -8,6 +8,7 @@ import seaborn as sns
 from IPython.display import display
 from nltk.tokenize import sent_tokenize
 
+
 class Chunking:
     def __init__(self, df_path, plot_dir=None, processed_dir=None):
         """
@@ -31,7 +32,7 @@ class Chunking:
             os.makedirs(self.processed_dir)
 
         print("🧪 Running full Chunking pipeline...\n")
-        
+
         if self.df_path:
             self.load_df()
 
@@ -71,10 +72,14 @@ class Chunking:
                     self.df["Date Sent To Company"], errors="coerce"
                 )
 
-            print(f"📥 DataFrame loaded successfully from {self.safe_relpath(self.df_path)}")
+            print(
+                f"📥 DataFrame loaded from  {self.safe_relpath(self.df_path)}"
+            )
 
         except FileNotFoundError as e:
-            print(f"⚠️ Error loading DataFrame from {self.safe_relpath(self.df_path)}: {e}")
+            print(
+                f"⚠️ Error loading DataFrame : {e}"
+            )
             raise e
 
         return self.df
@@ -111,7 +116,7 @@ class Chunking:
             chunks.append(" ".join(current_chunk))
 
         return chunks
-    
+
     def chunk_narrative(self, max_words=100):
         """
         Chunk narratives using sentence-aware chunking and explode into multiple rows.
@@ -134,29 +139,29 @@ class Chunking:
             return self.df_chunks
 
         else:
-            print("\n⚠️ No DataFrame found. Please ensure the DataFrame is loaded correctly.")
+            print(
+                "\n⚠️ No DataFrame found. Please ensure DataFrame is loaded correctly."
+            )
             return None
 
-    def plot_chunk_lengths(self, threshold=2):
+    def plot_chunk_lengths(self):
         """
         Plot distribution of chunk lengths.
         """
         if self.df_chunks is None:
             print("\n⚠️ Chunked DataFrame missing. Run chunk_narrative() first.")
             return
-        
+
         self.df_chunks["Chunk Length"] = self.df_chunks["Chunk"].apply(len)
         self.df_chunks["Chunk Length"] = self.df_chunks["Chunk Length"].astype(int)
-        
+
         # Sort Columns
         self.df_chunks = self.df_chunks[sorted(self.df_chunks.columns)]
 
         print("\nChunked DataFrame head:")
         display(self.df_chunks.head())
 
-        print(
-            f"\n🔹 DataFrame shape after exploding: {self.df_chunks.shape}"
-        )
+        print(f"\n🔹 DataFrame shape after exploding: {self.df_chunks.shape}")
         print(f"🔹 DataFrame shape before exploding: {self.df.shape}")
 
         print("🔹 Chunked DataFrame summary:\n")
@@ -164,9 +169,14 @@ class Chunking:
 
         # Plot the distribution of chunk length
         plt.figure(figsize=(10, 4))
-        sns.histplot(self.df_chunks["Chunk Length"], bins=100, kde=True, color="skyblue")
+        sns.histplot(
+            self.df_chunks["Chunk Length"], bins=100, kde=True, color="skyblue"
+        )
         plt.axvline(
-            self.df_chunks["Chunk Length"].mean(), color="black", linestyle="--", label="Mean"
+            self.df_chunks["Chunk Length"].mean(),
+            color="black",
+            linestyle="--",
+            label="Mean",
         )
         plt.title("Distribution of Chunk Lengths")
         plt.xlabel("Characters per Chunk")
@@ -176,9 +186,7 @@ class Chunking:
         # Adjust layout and show plot
         plt.tight_layout()
         if self.plot_dir:
-            plot_path = os.path.join(
-                self.plot_dir, "Distribution of Chunk Lengths.png"
-            )
+            plot_path = os.path.join(self.plot_dir, "Distribution of Chunk Lengths.png")
             plt.savefig(plot_path)
             print(f"\n💾 Plot saved to {self.safe_relpath(plot_path)}")
 
@@ -188,7 +196,13 @@ class Chunking:
         # Boxplot for chunk lengths by product
         plt.figure(figsize=(10, 10))
         palette = sns.color_palette("Set1", len(self.df_chunks["Product"].unique()))
-        sns.boxplot(data=self.df_chunks, x="Product", y="Chunk Length", hue="Product", palette=palette)
+        sns.boxplot(
+            data=self.df_chunks,
+            x="Product",
+            y="Chunk Length",
+            hue="Product",
+            palette=palette,
+        )
         plt.title("Distribution of Chunk Lengths for Product Types")
         plt.xticks(rotation=45, ha="right")
         plt.grid()
@@ -201,7 +215,7 @@ class Chunking:
             )
             plt.savefig(plot_path)
             print(f"\n💾 Plot saved to {self.safe_relpath(plot_path)}")
-        
+
         plt.show()
         plt.close()
 
@@ -217,7 +231,7 @@ class Chunking:
 
         if not hasattr(self, "df_chunks") or self.df_chunks is None:
             print(
-                "\n⚠️ No DataFrame found. Please ensure the DataFrame is loaded correctly"
+                "\n⚠️ No DataFrame found. Please ensure DataFrame is loaded correctly"
             )
             return
 
@@ -235,7 +249,8 @@ class Chunking:
     # ----- Run full pipeline ----- #
     def chunker(self):
         """
-        Runs the full chunking pipeline: data cleaning, chunking, and saving processed data.
+        Runs the full chunking pipeline: data cleaning, chunking,
+        and saving processed data.
         """
         self.chunk_narrative()
         self.plot_chunk_lengths()
