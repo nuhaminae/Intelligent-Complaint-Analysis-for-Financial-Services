@@ -11,7 +11,7 @@ from IPython.display import display
 
 
 class EDA:
-    def __init__(self, df_path, plot_dir=None, processed_dir=None):
+    def __init__(self, df_path=None, plot_dir=None, processed_dir=None):
         """
         Initiate EDA class from DataFrame path.
 
@@ -22,10 +22,12 @@ class EDA:
         """
 
         self.df_path = df_path
-        self.plot_dir = plot_dir or "plots"
+        self.plot_dir = plot_dir
         self.processed_dir = processed_dir
-
         self.df_raw = None
+
+        if df_path:
+            self.load_df()
 
         # Create output directories if they do not exist
         if not os.path.exists(self.plot_dir):
