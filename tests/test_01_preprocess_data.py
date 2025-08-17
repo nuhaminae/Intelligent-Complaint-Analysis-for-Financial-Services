@@ -86,11 +86,14 @@ def dummy_data():
             "Complaint ID": np.arange(1000000, 1000200),
         }
     )
+    
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv", mode="w", newline="")
+    df.to_csv(tmp.name, index=False)
+    tmp.close()
 
-    file_path = os.path.join("data", "temp", "temp.csv")
-    df.to_csv(file_path, index=False)
-    return file_path
+    yield tmp.name
 
+    os.remove(tmp.name)
 
 # Create an eda instance
 def test_eda_instance_creation(dummy_data):
@@ -143,8 +146,9 @@ def test_load_df(dummy_data):
 
 # Test load df method with invalid path
 def test_load_df_with_invalid_path():
-    eda = EDA(df_path="nonexistent.csv")
-    assert eda.df_raw is None
+    with pytest.raises(FileNotFoundError):
+        eda = EDA(df_path="nonexistent.csv")
+        eda.load_df()
 
 
 # Test clean narrative method
@@ -182,7 +186,7 @@ def test_visualise_complaint(dummy_data):
         ), f"Expected filename '{plot_name}', got: {os.path.basename(args[0])}"
 
 
-# Test isualise complaint method with invalid df path
+# Test visualise complaint method with invalid df path
 def test_visualise_complaint_without_df():
     eda = EDA(df_path=None)
     eda.df_raw = None
@@ -225,7 +229,7 @@ def test_visualise_complaint_length(dummy_data):
 
 
 # Test complaints narrative method
-def test_complaints_narative(dummy_data):
+def test_complaints_narrative(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
@@ -239,7 +243,7 @@ def test_complaints_narative(dummy_data):
         mock.patch("builtins.print") as mock_print,
     ):
 
-        eda_instance.complaints_narative()
+        eda_instance.complaints_narrative()
 
         # Assert that savefig was called
         mock_savefig.assert_called_once()
