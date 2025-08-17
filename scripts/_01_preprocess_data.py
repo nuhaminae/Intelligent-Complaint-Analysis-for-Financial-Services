@@ -11,7 +11,6 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import contractions
 
-# Initialise stopwords and lemmatizer for text preprocessing
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
@@ -350,4 +349,3 @@ class EDA:
         display (self.df.head())
             
         print(f"\nProcessed DataFrame shape: {self.df.shape}")
-
