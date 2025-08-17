@@ -28,8 +28,8 @@ class EDA:
         """
 
         self.df_path = df_path
-        self.plot_dir = plot_dir
-        self.processed_dir = processed_dir
+        self.plot_dir = plot_dir or "plots"
+        self.processed_dir = processed_dir or "processed"
 
         self.df_raw = None
 
@@ -66,51 +66,45 @@ class EDA:
             - Number of rows, columns, and data types
         """
 
-        # Calculate DataFrame relative path
-        rel_df_path = self.safe_relpath(self.df_path)
+        if not hasattr(self, "df_path") or self.df_path is None:
+            raise FileNotFoundError("⚠️ DataFrame path is None or invalid.")
 
-        if self.df_path:
-            try:
-                # self.df_raw = pd.read_csv(self.df_path)
-                self.df_raw = pd.read_csv(
-                    self.df_path,
-                    dtype={"Consumer complaint narrative": str},
-                    low_memory=False,
+        try:
+            # self.df_raw = pd.read_csv(self.df_path)
+            self.df_raw = pd.read_csv(self.df_path,
+                                    dtype={"Consumer complaint narrative": str},
+                                    low_memory=False,
+                                    )
+            if "Date received" in self.df_raw.columns:
+                self.df_raw["Date received"] = pd.to_datetime(
+                    self.df_raw["Date received"], errors="coerce"
                 )
-                if "Date received" in self.df_raw.columns:
-                    self.df_raw["Date received"] = pd.to_datetime(
-                        self.df_raw["Date received"], errors="coerce"
-                    )
-                if "Date sent to company" in self.df_raw.columns:
-                    self.df_raw["Date sent to company"] = pd.to_datetime(
-                        self.df_raw["Date sent to company"], errors="coerce"
-                    )
-                # Capitalise column names for consistency
-                self.df_raw.columns = [col.title() for col in self.df_raw.columns]
+            if "Date sent to company" in self.df_raw.columns:
+                self.df_raw["Date sent to company"] = pd.to_datetime(
+                    self.df_raw["Date sent to company"], errors="coerce"
+                )
+            # Capitalise column names for consistency
+            self.df_raw.columns = [col.title() for col in self.df_raw.columns]
 
-                print(f"DataFrame loaded successfully from {rel_df_path}")
-                print("\n🔹 DataFrame head:")
-                display(self.df_raw.head())
+            print(f"DataFrame loaded successfully from {self.safe_relpath(self.df_path)}")
+            print("\n🔹 DataFrame head:")
+            display(self.df_raw.head())
 
-                print("\n🔹 DataFrame tail:")
-                display(self.df_raw.tail())
+            print("\n🔹 DataFrame tail:")
+            display(self.df_raw.tail())
 
-                print("\n🔹 DataFrame shape:")
-                display(self.df_raw.shape)
+            print("\n🔹 DataFrame shape:")
+            display(self.df_raw.shape)
 
-                print("\n🔹 DataFrame columns:")
-                display(self.df_raw.columns)
+            print("\n🔹 DataFrame columns:")
+            display(self.df_raw.columns)
 
-                print("\n🔹 DataFrame summary:")
-                self.df_raw.info()
+            print("\n🔹 DataFrame summary:")
+            self.df_raw.info()
 
-            except Exception as e:
-                print(f"⚠️ Error loading DataFrame from {rel_df_path}: {e}")
-                self.df_raw = None
-
-        else:
-            print(f"⚠️ Error: File not found at {rel_df_path}")
-            self.df_raw = None
+        except FileNotFoundError as e:
+            print(f"⚠️ Error loading DataFrame from {self.safe_relpath(self.df_path)}: {e}")
+            raise e
 
         return self.df_raw
 
