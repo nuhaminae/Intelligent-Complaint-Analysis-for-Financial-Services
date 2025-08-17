@@ -7,7 +7,8 @@ import pandas as pd
 import seaborn as sns
 from IPython.display import display
 from nltk.tokenize import sent_tokenize
-
+import nltk
+nltk.download('punkt_tab')
 
 class Chunking:
     def __init__(self, df_path, plot_dir=None, processed_dir=None):
