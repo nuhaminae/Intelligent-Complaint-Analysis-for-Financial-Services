@@ -32,7 +32,7 @@ class LangchainIndexer:
 
         if not os.path.exists(self.vector_store_dir):
             os.makedirs(self.vector_store_dir)
-            
+
         self.embedding_model = HuggingFaceEmbeddings(
             model_name=f"sentence-transformers/{model_name}"
         )
@@ -43,7 +43,7 @@ class LangchainIndexer:
         )
 
         print(f"Using embedding model: {self.model_name}")
-        
+
         if self.df_chunks_path:
             self.load_chunks()
 
@@ -65,7 +65,6 @@ class LangchainIndexer:
             # Fallback to absolute path if on different drives
             return path
 
-
     def load_chunks(self):
         """
         Load the chunked DataFrame from CSV.
@@ -79,7 +78,9 @@ class LangchainIndexer:
 
             if "Chunk" not in self.df_chunks.columns:
                 raise ValueError(" Missing 'Chunk' column in the DataFrame.")
-            print(f"\n📥 Loaded {len(self.df_chunks)} chunks from {self.safe_relpath(self.df_chunks_path)}")
+            print(
+                f"\n📥 Loaded {len(self.df_chunks)} chunks from {self.safe_relpath(self.df_chunks_path)}"
+            )
         except Exception as e:
             print(f"\n⚠️ Error loading DataFrame: {e}")
             self.df_chunks = None
@@ -135,7 +136,9 @@ class LangchainIndexer:
                 failed_batches.append(batch_num)
 
         # self.vectorstore.persist()
-        print(f"\n💾 Vector store saved to: {self.safe_relpath(self.vector_store_dir)}\n")
+        print(
+            f"\n💾 Vector store saved to: {self.safe_relpath(self.vector_store_dir)}\n"
+        )
 
         if failed_batches:
             with open(failed_log_path, "w") as f:
