@@ -47,6 +47,37 @@ This project aims to reduce that time from days to minutes by building a RAG-pow
 
 ---
 
+## Business Impact
+
+This project transforms that workflow by introducing a Retrieval-Augmented Generation (RAG) chatbot that enables:
+
+### 🔹 Faster Decision-Making
+
+- Internal teams can now query complaints in natural language and receive grounded, formal responses in seconds.
+- Multi-turn support allows deeper exploration of issues without restarting the query.
+
+### 🔹 Improved Visibility
+
+- Metadata-enriched embeddings allow filtering by product and issue category, helping teams pinpoint recurring pain points.
+- Sentence-aware chunking ensures semantic fidelity, surfacing the most relevant complaint excerpts.
+
+### 🔹 Operational Efficiency
+
+- Manual review time reduced significantly for common queries. The chatbot can handle these in seconds.
+- The chatbot supports up to 3 follow-up questions, streamlining multi-layered investigations.
+
+### 🔹 Regulatory Readiness
+
+- Complaint narratives are traceable to their source, supporting auditability and compliance reporting.
+- Optional grammar and factuality scoring ensures responses meet internal communication standards.
+
+### 🔹 Scalable Deployment
+
+- The system is modular, CI-integrated, and ready for deployment via Hugging Face Spaces.
+- Non-technical users can interact via a Gradio UI with dropdown filters and source transparency.
+
+---
+
 ## Data Sources
 
 The project uses real-world complaint data from the Consumer Financial Protection Bureau (CFPB). Each record includes:
@@ -68,8 +99,8 @@ The repository is organised as follows:
 ├── .dvc/                              # Data Version Control
 ├── .github/workflows                  # CI workflows
 ├── data/                              # Data files
-├── insights/                          # Plots and charts for reporting
 ├── notebooks/                         # Notebooks
+├── plots/                             # Plots and charts for reporting
 ├── scripts/                           # Core scripts
 ├── tests/                             # Unit and pytest
 ├── .dvcignore                         # Ignore DVC files
@@ -78,6 +109,7 @@ The repository is organised as follows:
 ├── .pre-commit-config.yaml            # Pre-commit configuration
 ├── .trunkignore                       # Ignore trunk files
 ├── .yamllint.yml                      # YAML lint configuration
+├── app.py                             # Main Gradio application script
 ├── format.ps1                         # Formatting script
 ├── pyproject.toml                     # Project configuration
 ├── README.md                          # Project overview and setup instructions
@@ -128,25 +160,52 @@ dvc pull
    - Place complaint data in the `data/raw` directory, ensuring it matches the expected format.
 
 2. **Run jupyter notebooks**
-   - Run notebook in `notebooks/` in chronological order.
+   - Open with Jupyter or VSCode to navigate the workflow interactively.
+   - Run notebook in `notebooks/` in chronological order for exploratory and iterative development:
+
+      - Run the EdA notebook to explore the data and perform initial preprocessing.
+
+      ```bash
+      notebooks/01_eda_preprocessing.ipynb
+      ```
+
+      - Run the chunking notebook to create text chunks for embedding.
+
+      ```bash
+      notebooks/02_chunking.ipynb
+      ```
+
+      - Run the embedding and indexing notebook to create embeddings and build the FAISS index.
+
+      ```bash
+      notebooks/03_embedding_and_indexing.ipynb
+      ```
+
+      - Run the RAG core logic notebook to implement the retrieval-augmented generation (RAG) approach.
+
+      ```bash
+      notebooks/04_rag_core_logic.ipynb
+      ```
 
 3. **View curves**
-   - Generated plots will be available in the `insights/` directory or as specified by your script parameters.
+   - Generated plots will be available in the `plots/` directory or as specified by your script parameters.
 
 4. **Scripts and Tests**
    - Explore `scripts/` and `tests/` directory to interact with script and test suits.
 
 5. **Interactive APP**
+   - Features:
+      - Input box for natural-language questions
+      - Answer powered by RAG + semantic retrieval
+      - Source chunks displayed beneath answer
+      - Dropdown filters for product and issue category
+      - Conversation history retention for up to 3 follow-up questions
+      - Optional streaming with token-by-token output
 
    ```bash
    python app.py
    ```
 
-   - Features:
-      - Input box for natural-language questions
-      - Answer powered by RAG + semantic retrieval
-      - Source chunks displayed beneath answer
-      - Optional streaming with token-by-token output
 6. **Evaluation Table**
    - Located at `data/evaluation/rag_evaluation.csv`. It includes:
       - Questions used
@@ -155,17 +214,7 @@ dvc pull
       - Manual score (1–5)
       - Commentary
 
-7. **Explore with Notebooks**
-
-    Notebooks are provided for exploratory and iterative development:
-    - `notebooks/01_eda_preprocessing.ipynb`
-    - `notebooks/02_chunking.ipynb`
-    - `notebooks/03_embedding_and_indexing.ipynb`
-    - `notebooks/04_rag_core_logic.ipynb`
-
-    Open with Jupyter or VSCode to navigate the workflow interactively.
-
-8. **Code Quality and Linting**
+7. **Code Quality and Linting**
     This project uses pre-commit hooks to automatically format and lint `.py` and `.ipynb` files using:
 
     |Tool       | Purpose                                       |
@@ -183,6 +232,34 @@ dvc pull
 ---
 
 ## Insights
+
+![Complaints_Narratives](plots/01_eda/Distribution%20of%20Complaints%20With%20vs%20Without%20Narratives.png)
+
+Less than half of complaints included narratives, highlighting the need for improved data collection methods.
+
+---
+
+![Complaints_Product](plots/01_eda/Distribution%20of%20Complaints%20by%20Product.png)
+
+The distribution of complaints by product shows significant variation, indicating areas for targeted improvement.
+
+---
+
+![Complaints_Length](plots/01_eda/Distribution%20of%20Complaint%20Lengths.png)
+
+The length of complaints varies widely, with some being very brief and others quite detailed. This affects the effectiveness of automated analysis.
+
+---
+
+![Complaint_Distribution](plots/02_chunking_embedding/Distribution%20of%20Chunk%20Lengths.png)
+
+The distribution of chunk lengths shows that most chunks are relatively short, with a few outliers that are much longer. This could affect the performance of the embedding model.
+
+---
+
+![Complaint_Distribution_by_Product](plots/02_chunking_embedding/Distribution%20of%20Chunk%20Lengths%20for%20Product%20Types.png)
+
+The distribution of chunk lengths for different product types reveals insights into how complaints are segmented and informs targeted improvements.
 
 ---
 
