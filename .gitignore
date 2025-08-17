@@ -4,8 +4,9 @@
 __pycache__/
 .pytest_cache/
 
-# Virtual environment
+# Virtual environment and environment variables
 .chatvenv/
+.env
 
 # DVC
 /.dvc/tmp
