@@ -13,9 +13,11 @@ asttokens==3.0.0
 asyncssh==2.21.0
 atpublic==6.0.1
 attrs==25.3.0
+autopep8==2.3.2
 backoff==2.2.1
 bcrypt==4.3.0
 billiard==4.2.1
+black==25.1.0
 build==1.2.2.post1
 cachetools==5.5.2
 celery==5.5.3
@@ -57,6 +59,7 @@ faiss-cpu==1.11.0
 fastapi==0.116.0
 ffmpy==0.6.0
 filelock==3.18.0
+flake8==7.3.0
 flatbuffers==25.2.10
 flatten-dict==0.4.2
 flufl.lock==8.2.0
@@ -92,6 +95,7 @@ ipykernel==6.29.5
 ipython==9.4.0
 ipython_pygments_lexers==1.1.1
 ipywidgets==8.1.7
+isort==6.0.1
 iterative-telemetry==0.0.10
 jedi==0.19.2
 Jinja2==3.1.6
@@ -121,11 +125,13 @@ MarkupSafe==3.0.2
 marshmallow==3.26.1
 matplotlib==3.10.3
 matplotlib-inline==0.1.7
+mccabe==0.7.0
 mdurl==0.1.2
 mmh3==5.1.0
 mpmath==1.3.0
 multidict==6.6.3
 mypy_extensions==1.1.0
+nbqa==1.9.1
 nest-asyncio==1.6.0
 networkx==3.5
 nltk==3.9.1
@@ -160,12 +166,14 @@ pyahocorasick==2.2.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pybase64==1.4.1
+pycodestyle==2.14.0
 pycparser==2.22
 pydantic==2.11.7
 pydantic-settings==2.10.1
 pydantic_core==2.33.2
 pydot==4.0.1
 pydub==0.25.1
+pyflakes==3.4.0
 pygit2==1.18.0
 Pygments==2.19.2
 pygtrie==2.5.0
@@ -202,7 +210,6 @@ seaborn==0.13.2
 semantic-version==2.10.0
 semver==3.0.4
 sentence-transformers==5.0.0
-setuptools==80.9.0
 shellingham==1.5.4
 shortuuid==1.0.13
 shtab==1.7.2
@@ -219,7 +226,9 @@ tenacity==9.1.2
 textsearch==0.0.24
 threadpoolctl==3.6.0
 tiktoken==0.9.0
+tokenize_rt==6.2.0
 tokenizers==0.21.2
+tomli==2.2.1
 tomlkit==0.13.3
 torch==2.7.1
 tornado==6.5.1
