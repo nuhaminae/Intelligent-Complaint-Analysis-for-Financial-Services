@@ -3,6 +3,7 @@
 import os
 import re
 import unicodedata
+
 import contractions
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -67,10 +68,11 @@ class EDA:
 
         try:
             # self.df_raw = pd.read_csv(self.df_path)
-            self.df_raw = pd.read_csv(self.df_path,
-                                    dtype={"Consumer complaint narrative": str},
-                                    low_memory=False,
-                                    )
+            self.df_raw = pd.read_csv(
+                self.df_path,
+                dtype={"Consumer complaint narrative": str},
+                low_memory=False,
+            )
             if "Date received" in self.df_raw.columns:
                 self.df_raw["Date received"] = pd.to_datetime(
                     self.df_raw["Date received"], errors="coerce"
@@ -82,7 +84,9 @@ class EDA:
             # Capitalise column names for consistency
             self.df_raw.columns = [col.title() for col in self.df_raw.columns]
 
-            print(f"DataFrame loaded successfully from {self.safe_relpath(self.df_path)}")
+            print(
+                f"DataFrame loaded successfully from {self.safe_relpath(self.df_path)}"
+            )
             print("\n🔹 DataFrame head:")
             display(self.df_raw.head())
 
@@ -99,7 +103,9 @@ class EDA:
             self.df_raw.info()
 
         except FileNotFoundError as e:
-            print(f"⚠️ Error loading DataFrame from {self.safe_relpath(self.df_path)}: {e}")
+            print(
+                f"⚠️ Error loading DataFrame from {self.safe_relpath(self.df_path)}: {e}"
+            )
             raise e
 
         return self.df_raw
@@ -170,7 +176,7 @@ class EDA:
             )
             plt.savefig(plot_path)
             print(f"\n💾 Plot saved to {self.safe_relpath(plot_path)}")
-            
+
         plt.show()
         plt.close()
 
@@ -206,12 +212,13 @@ class EDA:
         plt.title("Complaints With vs. Without Narratives")
         plt.ylabel("Number of Complaints")
         plt.grid()
-        
+
         # Adjust layout and show plot
         plt.tight_layout()
         if self.plot_dir:
             plot_path = os.path.join(
-                self.plot_dir, "Distribution of Complaints With vs Without Narratives.png"
+                self.plot_dir,
+                "Distribution of Complaints With vs Without Narratives.png",
             )
             plt.savefig(plot_path)
             print(f"\n💾 Plot saved to {self.safe_relpath(plot_path)}")
@@ -237,7 +244,6 @@ class EDA:
                 "Payday loan",  # Payday loan
                 "Other financial service",  # other financial service
             ]
-
 
             # Filter the DataFrame
             self.df = self.df_raw[
@@ -314,7 +320,11 @@ class EDA:
         text = re.sub(r"<.*?>", "", text)
 
         # Normalize unicode and collapse whitespace
-        text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("utf-8", "ignore")
+        text = (
+            unicodedata.normalize("NFKD", text)
+            .encode("ascii", "ignore")
+            .decode("utf-8", "ignore")
+        )
         text = re.sub(r"\s+", " ", text).strip()
 
         return text
@@ -329,9 +339,9 @@ class EDA:
             )
             return
 
-        self.df["Clean Narrative"] = self.df[
-            "Consumer Complaint Narrative"
-        ].apply(self.clean_narrative)
+        self.df["Clean Narrative"] = self.df["Consumer Complaint Narrative"].apply(
+            self.clean_narrative
+        )
         print("\n✅ Normalisation complete.")
 
     # --------------------------------------------------------------------------------#
@@ -351,7 +361,7 @@ class EDA:
 
         # Sort and save processed DataFrame to CSV
         self.df = self.df[sorted(self.df.columns)]
-        
+
         df_name = os.path.join(self.processed_dir, filename)
         self.df.to_csv(df_name, index=False)
 

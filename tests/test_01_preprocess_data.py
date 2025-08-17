@@ -22,6 +22,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # trunk-ignore(ruff/E402)
 from scripts._01_preprocess_data import EDA
 
+
 @pytest.fixture
 def dummy_data():
 
@@ -85,7 +86,7 @@ def dummy_data():
             "Complaint ID": np.arange(1000000, 1000200),
         }
     )
-    
+
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv", mode="w", newline="")
     df.to_csv(tmp.name, index=False)
     tmp.close()
@@ -94,12 +95,15 @@ def dummy_data():
 
     os.remove(tmp.name)
 
+
 # Create an eda instance
 def test_eda_instance_creation(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
     assert eda_instance is not None
 
 
@@ -108,7 +112,9 @@ def test_load_df(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     # Assert that df_raw is loaded and is not None
     assert eda_instance.df_raw is not None
@@ -143,7 +149,6 @@ def test_load_df(dummy_data):
     assert eda_instance.df_raw.columns.tolist() == expected_columns
 
 
-
 # Test load df method with invalid path
 def test_load_df_with_invalid_path():
     with pytest.raises(FileNotFoundError):
@@ -155,7 +160,9 @@ def test_visualise_complaint(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     plot_name = "Distribution of Complaints by Product.png"
 
@@ -174,7 +181,6 @@ def test_visualise_complaint(dummy_data):
         assert (
             os.path.basename(args[0]) == plot_name
         ), f"Expected filename '{plot_name}', got: {os.path.basename(args[0])}"
-
 
 
 # Test visualise complaint method with invalid df path
@@ -198,10 +204,12 @@ def test_visualise_complaint_length(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     plot_name = "Distribution of Complaint Lengths.png"
-    #expected_plot_path = os.path.join(plot_dir, plot_name)
+    # expected_plot_path = os.path.join(plot_dir, plot_name)
 
     with (
         mock.patch("matplotlib.pyplot.show"),
@@ -226,7 +234,9 @@ def test_complaints_narrative(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     plot_name = "Distribution of Complaints With vs Without Narratives.png"
 
@@ -260,7 +270,9 @@ def test_filter_products(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     # Get the initial number of rows
     initial_rows = eda_instance.df_raw.shape[0]
@@ -298,7 +310,9 @@ def test_missing_values(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     # Inject missing values into a copy of the DataFrame
     eda_instance.df = eda_instance.df_raw.copy()
@@ -333,12 +347,15 @@ def test_missing_values(dummy_data):
             for msg in printed
         )
 
+
 # Test clean narrative method
 def test_clean_narrative(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     raw_text = "Dear CFPB, I am writing to file a complaint about my CREDIT CARD being charged twice!"
     cleaned = eda_instance.clean_narrative(raw_text)
@@ -347,13 +364,14 @@ def test_clean_narrative(dummy_data):
     assert "dear" not in cleaned and "cfpb" not in cleaned
 
 
-
 # Test normalise text method
 def test_normalise_text(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     # Ensure the DataFrame is loaded and assigned
     eda_instance.df = eda_instance.df_raw.copy()
@@ -389,7 +407,9 @@ def test_save_df(dummy_data):
     file_path = dummy_data
     plot_dir = tempfile.mkdtemp()
     processed_dir = tempfile.mkdtemp()
-    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+    eda_instance = EDA(
+        df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir
+    )
 
     # Assign a processed DataFrame
     eda_instance.df = eda_instance.df_raw.copy()
