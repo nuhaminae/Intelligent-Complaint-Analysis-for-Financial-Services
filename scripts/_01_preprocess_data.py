@@ -3,21 +3,15 @@
 import os
 import re
 import unicodedata
-
 import contractions
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from IPython.display import display
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-
-stop_words = set(stopwords.words("english"))
-lemmatizer = WordNetLemmatizer()
 
 
 class EDA:
-    def __init__(self, df_path, plot_dir=None, processed_dir=None):
+    def __init__(self, df_path=None, plot_dir=None, processed_dir=None):
         """
         Initiate EDA class from DataFrame path.
 
@@ -28,10 +22,12 @@ class EDA:
         """
 
         self.df_path = df_path
-        self.plot_dir = plot_dir or "plots"
-        self.processed_dir = processed_dir or "processed"
-
+        self.plot_dir = plot_dir
+        self.processed_dir = processed_dir
         self.df_raw = None
+
+        if df_path:
+            self.load_df()
 
         # Create output directories if they do not exist
         if not os.path.exists(self.plot_dir):
@@ -108,56 +104,6 @@ class EDA:
 
         return self.df_raw
 
-    @staticmethod
-    def clean_narrative(text):
-        if pd.isna(text):
-            return ""
-
-        # Lowercase
-        text = text.lower()
-
-        # Expand contractions
-        text = contractions.fix(text)
-
-        # Remove boilerplate phrases
-        boilerplate_patterns = [
-            r"^i am writing to (file|submit|lodge) a complaint.*?",
-            r"^to whom it may concern[:,]?",
-            r"^hello[:,]?",
-            r"^hi[:,]?",
-            r"^dear( [a-z]+)?[:,]?",
-            r"^this is regarding.*?",
-            r"^i am writing to dispute.*?",
-            r"^i would like to report.*?",
-            r"^i am reaching out.*?",
-        ]
-        for pattern in boilerplate_patterns:
-            text = re.sub(pattern, "", text, flags=re.IGNORECASE)
-
-        # Remove HTML tags
-        text = re.sub(r"<.*?>", "", text)
-
-        # Remove special characters (keep alphanumerics and basic punctuation)
-        text = re.sub(r"[^a-z0-9\s.,!?$%&@#-]", "", text)
-
-        # Collapse multiple spaces
-        text = re.sub(r"\s+", " ", text).strip()
-
-        # Normalize unicode
-        text = (
-            unicodedata.normalize("NFKD", text)
-            .encode("ascii", "ignore")
-            .decode("utf-8", "ignore")
-        )
-
-        # Remove stopwords and lemmatize
-        tokens = text.split()
-        tokens = [
-            lemmatizer.lemmatize(word) for word in tokens if word not in stop_words
-        ]
-
-        return " ".join(tokens)
-
     # -----------------------------Initial EDA-----------------------------#
     def visualise_complaint(self):
         """
@@ -194,11 +140,11 @@ class EDA:
         plt.show()
         plt.close()
 
-
     def visualise_complaint_length(self):
         """
         Visualise the length of complaints in the 'Consumer Complaint Narrative' column.
         """
+
         if not hasattr(self, "df_raw") or self.df_raw is None:
             print("⚠️ DataFrame not loaded. Please check initialisation.")
             return None
@@ -224,10 +170,11 @@ class EDA:
             )
             plt.savefig(plot_path)
             print(f"\n💾 Plot saved to {self.safe_relpath(plot_path)}")
-
+            
         plt.show()
         plt.close()
 
+    # -----------------------------Complaints Narrative-----------------------------#
     def complaints_narrative(self):
         """
         Visualise the 'Consumer Complaint Narrative' column.
@@ -291,6 +238,7 @@ class EDA:
                 "Other financial service",  # other financial service
             ]
 
+
             # Filter the DataFrame
             self.df = self.df_raw[
                 self.df_raw["Product"].isin(products_of_interest)
@@ -318,6 +266,7 @@ class EDA:
                     print(
                         '\n🚮 Rows with missing "Consumer Complaint Narrative" have been dropped.'
                     )
+                    print(f"🔹 Rows remaining: {self.df.shape[0]}")
 
                 # Identify and fill the rest of the missing values with "Unknown"
                 mis_values = self.df.isna().sum()
@@ -334,6 +283,42 @@ class EDA:
             return None
 
     # -----------------------------Normalise Dataset Text-----------------------------#
+
+    def clean_narrative(self, text):
+        if pd.isna(text):
+            return ""
+
+        # Lowercase and expand contractions
+        text = contractions.fix(text.lower())
+
+        # Remove boilerplate
+        boilerplate_patterns = [
+            r"^i am writing to (file|submit|lodge) a complaint.*?",
+            r"^to whom it may concern[:,]?",
+            r"^hello[:,]?",
+            r"^hi[:,]?",
+            r"^dear( [a-z]+)?[:,]?",
+            r"^this is regarding.*?",
+            r"^i am writing to dispute.*?",
+            r"^i would like to report.*?",
+            r"^i am reaching out.*?",
+        ]
+        for pattern in boilerplate_patterns:
+            text = re.sub(pattern, "", text, flags=re.IGNORECASE)
+
+        # Redact PII
+        text = re.sub(r"\b\d{4,}\b", "xxxx", text)
+        text = re.sub(r"\b(?:\d{1,2}/\d{1,2}/\d{2,4})\b", "xx/xx/xxxx", text)
+
+        # Remove HTML tags
+        text = re.sub(r"<.*?>", "", text)
+
+        # Normalize unicode and collapse whitespace
+        text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("utf-8", "ignore")
+        text = re.sub(r"\s+", " ", text).strip()
+
+        return text
+
     def normalise_text(self):
         """
         Normalise text under 'Consumer Complaint Narrative' columns
@@ -344,11 +329,10 @@ class EDA:
             )
             return
 
-        # Change  column to lower case
-        self.df["Clean Consumer Complaint Narrative"] = self.df[
+        self.df["Clean Narrative"] = self.df[
             "Consumer Complaint Narrative"
         ].apply(self.clean_narrative)
-        print("\n⚖️ Text under 'Consumer Complaint Narrative' column are normalised.")
+        print("\n✅ Normalisation complete.")
 
     # --------------------------------------------------------------------------------#
     def save_df(self, filename="filtered_complaints.csv"):
@@ -365,13 +349,9 @@ class EDA:
             )
             return
 
-        # Create output folder if it doesn't exist
-        if not os.path.exists(self.processed_dir):
-            os.makedirs(self.processed_dir)
-
         # Sort and save processed DataFrame to CSV
         self.df = self.df[sorted(self.df.columns)]
-
+        
         df_name = os.path.join(self.processed_dir, filename)
         self.df.to_csv(df_name, index=False)
 

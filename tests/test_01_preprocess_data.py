@@ -22,7 +22,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # trunk-ignore(ruff/E402)
 from scripts._01_preprocess_data import EDA
 
-
 @pytest.fixture
 def dummy_data():
 
@@ -144,19 +143,11 @@ def test_load_df(dummy_data):
     assert eda_instance.df_raw.columns.tolist() == expected_columns
 
 
+
 # Test load df method with invalid path
 def test_load_df_with_invalid_path():
     with pytest.raises(FileNotFoundError):
-        eda = EDA(df_path="nonexistent.csv")
-        eda.load_df()
-
-
-# Test clean narrative method
-def test_clean_narrative():
-    raw_text = "Dear CFPB, I am writing to file a complaint about my CREDIT CARD being charged twice!"
-    cleaned = EDA.clean_narrative(raw_text)
-    assert "credit" in cleaned and "card" in cleaned
-    assert "dear" not in cleaned and "cfpb" not in cleaned
+        EDA(df_path="nonexistent.csv")
 
 
 # Test visualise complaint method
@@ -172,7 +163,6 @@ def test_visualise_complaint(dummy_data):
         mock.patch("matplotlib.pyplot.show"),
         mock.patch("matplotlib.pyplot.savefig") as mock_savefig,
     ):
-
         eda_instance.visualise_complaint()
 
         # Assert that savefig was called
@@ -186,10 +176,13 @@ def test_visualise_complaint(dummy_data):
         ), f"Expected filename '{plot_name}', got: {os.path.basename(args[0])}"
 
 
+
 # Test visualise complaint method with invalid df path
 def test_visualise_complaint_without_df():
-    eda = EDA(df_path=None)
+    eda = EDA.__new__(EDA)  # Bypass __init__
     eda.df_raw = None
+    eda.plot_dir = tempfile.mkdtemp()  # Needed if visualise_complaint uses it
+
     with mock.patch("builtins.print") as mock_print:
         result = eda.visualise_complaint()
         assert result is None
@@ -290,7 +283,7 @@ def test_filter_products(dummy_data):
         "Money transfers",  # money transfer
         "Money transfer, virtual currency, or money service",  # money transfer
         "Checking or savings account",  # savings account
-        "Payday loan",  # Payday loan
+        "Payday loan",  # payday loan
         "Other financial service",  # other financial service
     ]
 
@@ -340,6 +333,20 @@ def test_missing_values(dummy_data):
             for msg in printed
         )
 
+# Test clean narrative method
+def test_clean_narrative(dummy_data):
+    file_path = dummy_data
+    plot_dir = tempfile.mkdtemp()
+    processed_dir = tempfile.mkdtemp()
+    eda_instance = EDA(df_path=file_path, plot_dir=plot_dir, processed_dir=processed_dir)
+
+    raw_text = "Dear CFPB, I am writing to file a complaint about my CREDIT CARD being charged twice!"
+    cleaned = eda_instance.clean_narrative(raw_text)
+
+    assert "credit" in cleaned and "card" in cleaned
+    assert "dear" not in cleaned and "cfpb" not in cleaned
+
+
 
 # Test normalise text method
 def test_normalise_text(dummy_data):
@@ -360,10 +367,10 @@ def test_normalise_text(dummy_data):
         eda_instance.normalise_text()
 
         # Check that the new column was created
-        assert "Clean Consumer Complaint Narrative" in eda_instance.df.columns
+        assert "Clean Narrative" in eda_instance.df.columns
 
         # Check that the text was normalized (lowercased, cleaned, etc.)
-        cleaned_text = eda_instance.df.loc[0, "Clean Consumer Complaint Narrative"]
+        cleaned_text = eda_instance.df.loc[0, "Clean Narrative"]
         assert "credit" in cleaned_text
         assert "card" in cleaned_text
         assert "charged" in cleaned_text
@@ -374,10 +381,7 @@ def test_normalise_text(dummy_data):
             " ".join(str(arg) for arg in call.args)
             for call in mock_print.call_args_list
         ]
-        assert any(
-            "Text under 'Consumer Complaint Narrative' column are normalised." in msg
-            for msg in printed
-        )
+        assert any("Normalisation complete." in msg for msg in printed)
 
 
 # Test save df method
