@@ -1,187 +1,124 @@
 import os
 import pandas as pd
-from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
-import chromadb
-from chromadb.utils import embedding_functions
-from packaging import version
-from IPython.display import display
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
+import json
 
-if version.parse(chromadb.__version__) < version.parse("0.4.0"):
-    raise RuntimeError("Please upgrade ChromaDB to >= 0.4.0 for compatibility.")
-
-class EmbeddingIndexer:
+class LangchainIndexer:
     def __init__(self, df_chunks_path, vector_store_dir="vector_z/", model_name="all-MiniLM-L6-v2"):
         """
-        Initialise the EmbeddingIndexer with paths and model configuration.
+        Initialize the LangchainIndexer using LangChain's Chroma wrapper.
 
         Args:
             df_chunks_path (str): Path to the chunked DataFrame file (CSV).
             vector_store_dir (str): Directory to persist the ChromaDB vector store.
-            model_name (str): Name of the sentence-transformers model to use.
+            model_name (str): SentenceTransformer model name.
         """
         self.df_chunks_path = df_chunks_path
         self.vector_store_dir = vector_store_dir
         self.model_name = model_name
         self.df_chunks = None
 
-        # Create directory if it does not exist
         os.makedirs(self.vector_store_dir, exist_ok=True)
 
-        self.client = chromadb.PersistentClient(path=self.vector_store_dir)
-        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=f"sentence-transformers/{model_name}"
+        self.embedding_model = HuggingFaceEmbeddings(model_name=f"sentence-transformers/{model_name}")
+        self.vectorstore = Chroma(
+            collection_name="complaints_chunks",
+            embedding_function=self.embedding_model,
+            persist_directory=self.vector_store_dir
         )
 
-        try:
-            self.collection = self.client.get_or_create_collection(
-                name="complaints_chunks",
-                embedding_function=self.embedding_fn
-            )
-        except Exception as e:
-            raise RuntimeError(f"Failed to create or retrieve ChromaDB collection: {e}")
-
-        print(f"Using model: {self.model_name}\n")
-        print(f"Embedding dimension: {self.embedding_fn._model.get_sentence_embedding_dimension()}")
-
-    @staticmethod
-    def safe_relpath(path, start=os.getcwd()):
-        """
-        Safely compute a relative path, falling back to absolute if needed.
-
-        Args:
-            path (str): Target path.
-            start (str): Base path to compute relative path from.
-        Returns:
-            str: Relative or absolute path.
-        """
-        try:
-            return os.path.relpath(path, start)
-        except ValueError:
-            return path
+        print(f"Using embedding model: {self.model_name}")
 
     def load_chunks(self):
         """
         Load the chunked DataFrame from CSV.
-
-        Returns:
-            pd.DataFrame: Loaded DataFrame with chunked complaint narratives.
         """
-        rel_df_path = self.safe_relpath(self.df_chunks_path)
         try:
             self.df_chunks = pd.read_csv(self.df_chunks_path)
             if "Chunk" not in self.df_chunks.columns:
-                raise ValueError("Missing 'Chunk' column in the loaded DataFrame.")
-            print(f"\nDataFrame loaded successfully from {rel_df_path}")
+                raise ValueError("Missing 'Chunk' column in the DataFrame.")
+            print(f"\nLoaded {len(self.df_chunks)} chunks from {self.df_chunks_path}")
         except Exception as e:
-            print(f"Error loading Chunked DataFrame from {rel_df_path}: {e}")
+            print(f"\nError loading DataFrame: {e}")
             self.df_chunks = None
-        return self.df_chunks
 
-    def index_chunks(self, batch_size=500):
+
+    def index_chunks(self, batch_size=5000, resume_from=0, failed_log_path="failed_batches.json"):
         """
-        Embed and index the complaint chunks into ChromaDB in batches.
+        Convert DataFrame rows into LangChain Documents and index them in Chroma in batches.
 
         Args:
-            batch_size (int): Number of chunks to encode per batch. Defaults to 500.
+            batch_size (int): Number of documents to index per batch.
+            resume_from (int): Batch index to resume from (0-based).
+            failed_log_path (str): Path to save failed batch indices for retry.
         """
         if self.df_chunks is None:
             raise ValueError("DataFrame not loaded. Run load_chunks() first.")
 
-        try:
-            existing_count = self.collection.count()
-            if existing_count > 0:
-                print(f"Skipping indexing: collection already contains {existing_count} chunks.")
-                print(f"\nVector store saved to: {self.safe_relpath(self.vector_store_dir)}")
-                return
-        except Exception as e:
-            print(f"Warning: Could not check collection count. Proceeding anyway. Error: {e}")
+        existing = self.vectorstore._collection.count()
+        if existing > 0 and resume_from == 0:
+            print(f"\nSkipping indexing: {existing} documents already exist.")
+            return
 
-        print(f"\nEncoding and indexing {len(self.df_chunks)} chunks into ChromaDB...")
+        print(f"\nIndexing {len(self.df_chunks)} complaint chunks into ChromaDB in batches of {batch_size}...\n")
 
-        chunks = self.df_chunks["Chunk"].tolist()
-        embeddings = self.embedding_fn._model.encode(chunks, batch_size=batch_size, show_progress_bar=True)
-        print(f"Embeddings shape: {embeddings.shape}")
-        print(f"\nEach embedding has {embeddings.shape[1]} dimensions")
+        documents = []
+        for _, row in tqdm(self.df_chunks.iterrows(), total=len(self.df_chunks), desc="Preparing documents"):
+            metadata = row.to_dict()
+            content = metadata.pop("Chunk", "").strip()
+            if not content:
+                continue
+            documents.append(Document(page_content=content, metadata=metadata))
 
-        documents = chunks
-        metadatas = self.df_chunks.to_dict(orient="records")
-        ids = [f"chunk-{i}" for i in range(len(chunks))]
+        failed_batches = []
 
-        try:
-            self.collection.add(documents=documents, metadatas=metadatas, ids=ids, embeddings=embeddings)
-            print(f"\nIndexing complete. Total chunks added: {len(documents)}")
-        except Exception as e:
-            print(f"\nFailed to add documents to ChromaDB: {e}")
+        for i in range(resume_from * batch_size, len(documents), batch_size):
+            batch_num = i // batch_size
+            batch = documents[i:i + batch_size]
+            try:
+                self.vectorstore.add_documents(batch)
+                print(f"\nIndexed batch {batch_num + 1} ({len(batch)} documents)")
+            except Exception as e:
+                print(f"\nFailed to index batch {batch_num + 1}: {e}")
+                failed_batches.append(batch_num)
 
-        print(f"\nVector store saved to: {self.safe_relpath(self.vector_store_dir)}")
+        #self.vectorstore.persist()
+        print(f"\nVector store saved to: {self.vector_store_dir}\n")
 
-    def search_chunks(self, query, n_results=3, where=None):
+        if failed_batches:
+            with open(failed_log_path, "w") as f:
+                json.dump(failed_batches, f)
+            print(f"\nFailed batches logged to: {failed_log_path}")
+        else:
+            print("All batches indexed successfully.")
+
+    def search(self, query, k=3, filter=None):
         """
-        Search for the most relevant chunks to a query using semantic similarity.
+        Perform semantic search using LangChain's retriever.
 
         Args:
-            query (str): The search query string.
-            n_results (int): Number of top results to return. Defaults to 3.
-            where (dict): Optional metadata filter (e.g., {"Product": "Credit card"}).
-        Returns:
-            dict: ChromaDB query result containing documents, metadata, distances, etc.
-        """
-        query_embedding = self.embedding_fn._model.encode([query])
-        try:
-            results = self.collection.query(
-                query_embeddings=query_embedding,
-                n_results=n_results,
-                where=where
-            )
-            return results
-        except Exception as e:
-            print(f"Search failed: {e}")
-            return None
-
-    def format_search_results(self, results):
-        """
-        Convert ChromaDB search result dictionary into a readable DataFrame.
-
-        Args:
-            results (dict): Output from search_chunks()
-        Returns:
-            pd.DataFrame: Flattened and formatted result table
-        """
-        if not results or "metadatas" not in results:
-            print("No results to format.")
-            return pd.DataFrame()
-
-        flat_rows = []
-        for i in range(len(results["metadatas"][0])):
-            row = results["metadatas"][0][i].copy()
-            row["Chunk ID"] = results["ids"][0][i]
-            row["Distance"] = results["distances"][0][i]
-            row["Chunk Text"] = results["documents"][0][i]
-            flat_rows.append(row)
-
-        df = pd.DataFrame(flat_rows)
-        df = df.sort_values("Distance")
-        return df
-    
-    def run_batch_queries_grouped(self, query_product_pairs, n_results=3):
-        """
-        Run multiple semantic search queries and group results under business product labels.
-
-        Args:
-            query_product_pairs (list of tuples): Each tuple is (query, dataset_product, business_product).
-            n_results (int): Number of top results to return per query.
+            query (str): Search query.
+            k (int): Number of top results.
+            filter (dict): Optional metadata filter.
 
         Returns:
-            dict: Mapping from (query, business_product) to formatted DataFrame of results.
+            list: Retrieved Document objects.
         """
-        results = {}
+        retriever = self.vectorstore.as_retriever(search_kwargs={"k": k, "filter": filter})
+        return retriever.invoke(query)
 
-        for query, dataset_product, business_product in query_product_pairs:
-            print(f"\nQuery: '{query}' | Dataset Product: '{dataset_product}' | Business Product: '{business_product}'")
-            raw = self.search_chunks(query=query, n_results=n_results, where={"Product": dataset_product})
-            formatted = self.format_search_results(raw)
-            display(formatted[["Chunk ID", "Distance", "Company", "Issue", "Chunk Text"]].head(n_results))
-            results[(query, business_product)] = formatted
-
-        return results
+    def preview_results(self, query, k=3, filter=None):
+        """
+        Display top-k search results for a query.
+        """
+        results = self.search(query, k=k, filter=filter)
+        # Print the top result
+        for i, doc in enumerate(results):
+            print(f"--- Result {i+1} ---")
+            print(f"Product: {doc.metadata.get('Product')}")
+            print(f"Issue: {doc.metadata.get('Issue')}")
+            print(f"Chunk:{doc.page_content}\n")
