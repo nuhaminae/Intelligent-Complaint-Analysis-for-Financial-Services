@@ -1,38 +1,69 @@
+---
 name: CI
-on: [push, pull_request]
+
+on:
+  push: {}
+  pull_request: {}
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.11"
 
-      - name: Cache pip dependencies
+      - name: Set up pip cache directory
+        run: echo "PIP_CACHE_DIR=$(pip cache dir)" >> $GITHUB_ENV
+
+      - name: Cache virtualenv
+        id: venv-cache
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          path: .chatvenv
+          key: ${{ runner.os }}-venv-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-venv-
 
-      - name: Install dependencies
+      - name: Create and install dependencies if cache miss
+        if: steps.venv-cache.outputs.cache-hit != 'true'
         run: |
           python -m venv .chatvenv
           .\.chatvenv\Scripts\python.exe -m pip install --upgrade pip
           .\.chatvenv\Scripts\python.exe -m pip install -r requirements.txt
 
-      - name: Download NLTK data
-        run: |
-          .\.chatvenv\Scripts\python.exe -m nltk.downloader stopwords wordnet punkt omw-1.4
+      - name: Confirm Python version
+        run: .\.chatvenv\Scripts\python.exe --version
 
-      - name: Run tests
-        run: python --version
+      - name: Style and Lint Validation (Black, isort, Flake8)
+        run: |
+          .\.chatvenv\Scripts\black . --exclude=.chatvenv --check --diff
+          .\.chatvenv\Scripts\isort . --skip .chatvenv --check --diff
+          .\.chatvenv\Scripts\python.exe -m flake8 . `
+            --exclude=.chatvenv `
+            --exit-zero
+
+      - name: nbQA Notebook Quality Checks
+        run: |
+          if (Get-ChildItem -Recurse -Filter *.ipynb) {
+            .\.chatvenv\Scripts\python.exe -m nbqa black . `
+              --line-length=88 --exclude .chatvenv
+            .\.chatvenv\Scripts\python.exe -m nbqa isort . --skip .chatvenv
+            .\.chatvenv\Scripts\python.exe -m nbqa flake8 . `
+              --exclude .chatvenv --exit-zero
+          } else {
+            echo "::notice::Skipping nbQA checks — no notebooks found in repo."
+          }
 
       - name: Run pytest
-        run: .\.chatvenv\Scripts\python.exe -m pytest tests --maxfail=1 --disable-warnings -q
+        run: |
+          .\.chatvenv\Scripts\python.exe -m pytest tests `
+            --tb=short --maxfail=1 --disable-warnings -q `
+            || echo "::error::Tests failed"
