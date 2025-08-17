@@ -1,0 +1,28 @@
+# .trunkignore
+
+## Ignore raw output and temporary folders
+
+*out/
+*logs/
+*tmp/
+*notifications/
+*actions/
+*tools/
+
+## Ignore Trunk user config files
+
+user_trunk.yaml
+user.yaml
+
+## Ignore notebooks and scripts
+
+*.ipynb
+*.py
+
+## Ignore model artifacts and cached data
+
+*.pkl
+*.h5
+__pycache__/
+checkpoints/
+cache/

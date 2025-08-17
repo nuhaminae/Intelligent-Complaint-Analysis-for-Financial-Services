@@ -1,0 +1,14 @@
+# pyproject/toml
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+skip-string-normalization = false
+
+
+[tool.isort]
+profile = "black"
+skip = [".chatvenv"]
+
+
+[tool.nbqa]
+exclude = [".chatvenv"]
