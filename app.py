@@ -1,35 +1,57 @@
-import gradio as gr
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from transformers import pipeline
-from langchain_huggingface import HuggingFacePipeline
+# app.py
 
-from scripts._03_rag_core_logic import RAGPipeline
+import gradio as gr
 from chromadb import PersistentClient
+
+from scripts._04_rag_core_logic import RAGPipeline
 
 # Load vector store and pipeline
 chroma_client = PersistentClient(path="vector store/")
 rag = RAGPipeline(chroma_client=chroma_client, eval_dir="data/evaluation")
 
-def ask(question):
-    result = rag.run(question)
+
+product_options = ["All", "Credit card", "BNPL", "Personal loan", "Savings account", "Money transfers"]
+issue_options = ["All", "Billing dispute", "Delayed response", "Unauthorized charges", "Account closure"]
+
+def ask(question, product, issue):
+    filters = {}
+    if product != "All":
+        filters["Product"] = product
+    if issue != "All":
+        filters["Issue"] = issue
+
+    result = rag.run(question, filters=filters)
     answer = result["answer"]
     sources = result["sources"]
     sources_display = "\n\n".join([f"🔹 {src}" for src in sources])
     return answer, sources_display
 
-# Interface
-demo = gr.Interface(
-    fn=ask,
-    inputs=gr.Textbox(lines=2, placeholder="Ask about customer complaints..."),
-    outputs=[
-        gr.Textbox(label="Answer", lines=5),
-        gr.Textbox(label="Retrieved Sources", lines=8)
-    ],
-    title="CrediTrust Complaint Analyst 🤖",
-    description="Ask any question about customer complaints across products like BNPL, loans, savings, money stransfer etc. The system retrieves and summarises relevant feedback.",
-    flagging_mode="never"
-)
+def clear():
+    rag.reset_history()
+    return "", ""
+
+with gr.Blocks() as demo:
+    gr.Markdown("## CrediTrust Complaint Analyst 🤖")
+    gr.Markdown("Ask questions about customer complaints. \
+                \
+                Filter by product or issue. Click 'Clear' to reset context.")
+
+    with gr.Row():
+        question_input = gr.Textbox(lines=2, placeholder="Ask about customer complaints...")
+        clear_btn = gr.Button("Clear History")
+
+    with gr.Row():
+        product_dropdown = gr.Dropdown(choices=product_options, label="Product Filter", value="All")
+        issue_dropdown = gr.Dropdown(choices=issue_options, label="Issue Filter", value="All")
+
+    answer_output = gr.Textbox(label="Answer", lines=5)
+    sources_output = gr.Textbox(label="Retrieved Sources", lines=8)
+
+    submit_btn = gr.Button("Ask")
+
+    submit_btn.click(fn=ask, inputs=[question_input, product_dropdown, issue_dropdown],
+                    outputs=[answer_output, sources_output])
+    clear_btn.click(fn=clear, outputs=[answer_output, sources_output])
 
 if __name__ == "__main__":
     demo.launch()
