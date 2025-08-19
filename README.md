@@ -206,15 +206,7 @@ dvc pull
    python app.py
    ```
 
-6. **Evaluation Table**
-   - Located at `data/evaluation/rag_evaluation.csv`. It includes:
-      - Questions used
-      - Answers generated
-      - Source documents pulled
-      - Manual score (1–5)
-      - Commentary
-
-7. **Code Quality and Linting**
+6. **Code Quality and Linting**
     This project uses pre-commit hooks to automatically format and lint `.py` and `.ipynb` files using:
 
     |Tool       | Purpose                                       |
@@ -232,6 +224,8 @@ dvc pull
 ---
 
 ## Insights
+
+### EDA & Chunking
 
 ![Complaints_Narratives](plots/01_eda/Distribution%20of%20Complaints%20With%20vs%20Without%20Narratives.png)
 
@@ -260,6 +254,27 @@ The distribution of chunk lengths shows that most chunks are relatively short, w
 ![Complaint_Distribution_by_Product](plots/02_chunking_embedding/Distribution%20of%20Chunk%20Lengths%20for%20Product%20Types.png)
 
 The distribution of chunk lengths for different product types reveals insights into how complaints are segmented and informs targeted improvements.
+
+---
+
+### RAG Implementation
+
+- The evaluation of the RAG system was conducted using a set of predefined questions and manually scored answers.
+- Evaluation Table located at `data/evaluation/rag_evaluation.csv` and `data/evaluation/rag_evaluation.md`. It includes:
+      - Questions used (20)
+      - Answers generated
+      - Source documents pulled
+      - Manual score (1–5)
+      - Commentary
+
+| Question                                      | Generated Answer (Summary)                                                     | Quality Score | Commentary                                                                 |
+|----------------------------------------------|---------------------------------------------------------------------------------|---------------|----------------------------------------------------------------------------|
+| Why are users unhappy with payday loans?     | Misleading practices and hidden fees trap users in debt cycles.                 | 5             | Strong abstraction across sources; captures core sentiment fluently.      |
+| Do customers report unexpected fees?         | Fees deducted unexpectedly from paychecks, contradicting loan terms.            | 4             | Clear answer, but closely mirrors one complaint without summarising.      |
+| What are the most common credit card issues? | Billing disputes, fraud, credit limit reductions, and privacy concerns.         | 4             | Informative, but lifted directly from a retrieved source.                 |
+| Are savings accounts being frozen?           | Account freezes cause financial stress; users demand clear explanations.        | 4             | Accurate but lacks synthesis; echoes one complaint nearly verbatim.       |
+| Are users misled about promotional offers?   | Promotions are unclear or contradictory, leading to unexpected charges.         | 5             | Well-summarised across multiple complaints; captures systemic issue.      |
+| Do users face refund delays?                 | Refunds are delayed without clear updates, violating consumer protection norms. | 5             | Strong generalisation; reflects regulatory framing and user frustration.  |
 
 ---
 
