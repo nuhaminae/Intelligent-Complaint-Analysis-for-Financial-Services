@@ -28,10 +28,12 @@ class EDA:
         self.df_raw = None
 
         # Create output directories if they do not exist
-        if not os.path.exists(self.plot_dir):
+        if self.plot_dir is not None and not os.path.exists(self.plot_dir):
             os.makedirs(self.plot_dir)
-        if not os.path.exists(self.processed_dir):
+
+        if self.processed_dir is not None and not os.path.exists(self.processed_dir):
             os.makedirs(self.processed_dir)
+
 
         if self.df_path:
             self.load_df()
