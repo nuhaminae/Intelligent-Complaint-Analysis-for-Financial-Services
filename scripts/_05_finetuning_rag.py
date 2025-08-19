@@ -10,9 +10,9 @@ from evaluate import load
 from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
+    EvalPrediction,
     Trainer,
     TrainingArguments,
-    EvalPrediction,
 )
 
 warnings.simplefilter("ignore", category=FutureWarning)
