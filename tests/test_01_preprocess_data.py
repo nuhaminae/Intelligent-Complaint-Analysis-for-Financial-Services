@@ -152,7 +152,7 @@ def test_load_df(dummy_data):
 # Test load df method with invalid path
 def test_load_df_with_invalid_path():
     with pytest.raises(FileNotFoundError):
-        EDA(df_path="nonexistent.csv")
+        EDA(df_path="nonexistent/path/to/complaints.csv")
 
 
 # Test visualise complaint method
