@@ -1,12 +1,11 @@
-# _04_rag_core_logic
+# _04_rag_core_logic.py
 
+import json
 import os
 import re
 from difflib import SequenceMatcher
 
 import pandas as pd
-
-# To Load OpenAI key
 from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
 from langchain_chroma import Chroma
@@ -53,21 +52,28 @@ class RAGPipeline:
         if not os.path.exists(self.eval_dir):
             os.makedirs(self.eval_dir)
 
-        print("🚀 Initialising RAGPipeline...")
+        print("🚀 Initialising RAGPipeline...\n")
+
         self.embedding_model = HuggingFaceEmbeddings(model_name=embedding_model_name)
         self.retriever = Chroma(
             client=chroma_client,
             collection_name=collection_name,
             embedding_function=self.embedding_model,
-        ).as_retriever(search_kwargs={"k": 5})
+        ).as_retriever(search_kwargs={"k": 10})
 
         self.prompt_template = PromptTemplate.from_template(
-            """You are a financial analyst assistant for CrediTrust. Your task is to generate clear, insightful summaries of customer complaints.
+            """You are a financial analyst assistant for CrediTrust. Your task is to generate clear, insightful summaries of customer complaints across financial products.
+
+        Instructions:
+        - First, analyse the question carefully to understand what financial issue is being asked.
+        - Then, synthesise key insights from the retrieved complaint excerpts.
+        - Write in full sentences using formal, grammatically correct language.
+        - Do not copy excerpts directly. Instead, extract themes and explain them concisely in your own words.
+        - Avoid repetition and vague statements.
+        - If the context lacks a clear answer, say so politely and suggest what additional data might help.
 
         Previous exchanges:
         {history}
-
-        Use the retrieved excerpts to answer the current question. Write in full sentences using formal, grammatically correct language. Do not copy excerpts directly. Instead, extract key themes and explain them concisely in your own words. Avoid repetition. If the context lacks a clear answer, say so politely.
 
         Context:
         {context}
@@ -102,8 +108,6 @@ class RAGPipeline:
             },
             return_source_documents=True,
         )
-
-        print("RAGPipeline initialised.")
 
     def safe_relpath(self, path, start=None):
         """
@@ -141,10 +145,10 @@ class RAGPipeline:
     def clean_chunks(
         self,
         chunks,
-        min_words=20,
-        max_words=150,
+        min_words=30,
+        max_words=120,
         max_chunks=3,
-        similarity_threshold=0.9,
+        similarity_threshold=0.95,
     ):
         """
         Clean and filter retrieved chunks to improve LLM answer quality.
@@ -164,10 +168,6 @@ class RAGPipeline:
             # Filters profanity, censored words, and special character overload
             return bool(re.search(r"(xxxx|f\*+|s\*+|[^\w\s]{4,})", text.lower()))
 
-        def ends_in_complete_sentence(text):
-            # Ensures chunk ends with a sentence delimiter
-            return bool(re.match(r".+[.!?]$", text.strip()))
-
         seen = []
         cleaned = []
 
@@ -176,11 +176,7 @@ class RAGPipeline:
             word_count = len(text.split())
 
             # Skip noisy or short chunks
-            if (
-                word_count < min_words
-                or is_profane_or_noisy(text)
-                or not ends_in_complete_sentence(text)
-            ):
+            if word_count < min_words or is_profane_or_noisy(text):
                 continue
 
             # Truncate long chunks cleanly
@@ -204,7 +200,7 @@ class RAGPipeline:
 
         return cleaned
 
-    def run(self, question):
+    def run_rag(self, question):
         """
         Run the full RAG pipeline for a given question.
 
@@ -214,8 +210,7 @@ class RAGPipeline:
             dict: Contains question, answer, and source documents.
         """
 
-        print("-" * 100)
-        print(f"Running RAG pipeline for: {question}")
+        print(f"\n❔ Running RAG pipeline for: {question}")
 
         retrieved_docs = self.retriever.invoke(question)
         cleaned_docs = self.clean_chunks(retrieved_docs)
@@ -245,9 +240,9 @@ class RAGPipeline:
         # Store the turn
         self.conversation_history.append({"question": question, "answer": answer})
 
-        print(f"\nAnswer:\n{answer}")
-        print(f"\nSources retrieved: {len(cleaned_docs)}")
-        print("-" * 100)
+        print(f"\n📌 Answer:\n {answer}")
+        print(f"\n📌 Sources retrieved:\n {len(cleaned_docs)}")
+        print("🔹 " * 25)
 
         return {
             "question": question,
@@ -255,7 +250,7 @@ class RAGPipeline:
             "sources": [doc.page_content for doc in cleaned_docs],
         }
 
-    def evaluate(self, questions, filename="rag_eval.csv"):
+    def evaluate(self, questions, filename="rag_evaluation.csv"):
         """
         Run qualitative evaluation on a list of questions and save results to CSV.
 
@@ -266,10 +261,10 @@ class RAGPipeline:
         Returns:
             pd.DataFrame: Evaluation results.
         """
-        print(f"Starting evaluation on {len(questions)} questions...")
+        print(f"🧪 Starting evaluation on {len(questions)} questions...")
         records = []
         for q in tqdm(questions, desc="Evaluating"):
-            result = self.run(q)
+            result = self.run_rag(q)
             records.append(
                 {
                     "Question": result["question"],
@@ -280,57 +275,118 @@ class RAGPipeline:
                     "Retrieved Source 2": (
                         result["sources"][1] if len(result["sources"]) > 1 else ""
                     ),
+                    "Retrieved Source 3": (
+                        result["sources"][2] if len(result["sources"]) > 2 else ""
+                    ),
                     "Quality Score (1-5)": "",
                     "Comments": "",
                 }
             )
 
-        eval_df = pd.DataFrame(records)
+        self.eval_df = pd.DataFrame(records)
         if self.eval_dir:
             os.makedirs(self.eval_dir, exist_ok=True)
             output_path = os.path.join(self.eval_dir, filename)
-            eval_df.to_csv(output_path, index=False)
+            self.eval_df.to_csv(output_path, index=False)
             print(
-                f"\nEvaluation complete. Results saved to: {self.safe_relpath(output_path)}"
+                f"\n💾 Evaluation complete. Results saved to: {self.safe_relpath(output_path)}"
             )
         else:
-            print("\nEvaluation directory not specified. Skipping CSV export.")
-        return eval_df
+            print("\n⚠️ Evaluation directory not specified. Skipping CSV export.")
+        return self.eval_df
 
     def generate_markdown_table(self, df, filename="rag_evaluation.md"):
         """
         Convert evaluation DataFrame to a Markdown table with highlights for low scores and hallucinations.
+        Adds chunk length metadata for traceability.
         """
 
         def highlight(score, comment):
             try:
                 score = int(score)
             except Exception:
-                return ""
-            if score <= 2:
+                score = None
+
+            comment = str(comment).lower() if isinstance(comment, str) else ""
+
+            if score is not None and score <= 2:
                 return "🚨"
-            elif "hallucination" in comment.lower():
+            elif "hallucination" in comment:
                 return "⚠️"
             return ""
 
-        if self.eval_dir:
-            os.makedirs(self.eval_dir, exist_ok=True)
-            output_path = os.path.join(self.eval_dir, filename)
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write("##RAG System Evaluation\n\n")
-                f.write(
-                    "| Question | Generated Answer | Retrieved Source 1 | Retrieved Source 2 | Quality Score (1–5) | Comments |\n"
-                )
-                f.write(
-                    "|----------|------------------|---------------------|---------------------|----------------------|----------|\n"
-                )
-                for _, row in df.iterrows():
-                    flag = highlight(row["Quality Score (1-5)"], row["Comments"])
-                    f.write(
-                        f"| {row['Question']} | {row['Generated Answer']} | {row['Retrieved Source 1']} | {row['Retrieved Source 2']} | {row['Quality Score (1-5)']} {flag} | {row['Comments']} |\n"
-                    )
-            print(
-                f"\nMarkdown evaluation table saved to: {self.safe_relpath(output_path)}"
+        def chunk_length(text):
+            return len(text.split()) if isinstance(text, str) else 0
+
+        def format_row(row):
+            flag = highlight(row["Quality Score (1-5)"], row["Comments"])
+            source1_len = chunk_length(row["Retrieved Source 1"])
+            source2_len = chunk_length(row["Retrieved Source 2"])
+            source3_len = chunk_length(row["Retrieved Source 3"])
+            return (
+                f"| {row['Question']} | {row['Generated Answer']} | "
+                f"{row['Retrieved Source 1']} | {row['Retrieved Source 2']} | {row['Retrieved Source 3']} | "
+                f"{row['Quality Score (1-5)']} {flag} | {row['Comments']} | "
+                f"{source1_len}/{source2_len}/{source3_len} |"
             )
-        else:
-            print("\nEvaluation directory not specified. Skipping Markdown export.")
+
+        if not self.eval_dir:
+            print("\n⚠️ Evaluation directory not specified. Skipping Markdown export.")
+            return
+
+        output_path = os.path.join(self.eval_dir, filename)
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("# RAG System Evaluation\n\n")
+            f.write(
+                "| Question | Generated Answer | Retrieved Source 1 | Retrieved Source 2 | "
+                "Retrieved Source 3 | Quality Score (1–5) | Chunk Lengths (1/2/3)  |Comments |\n"
+            )
+            f.write(
+                "|----------|------------------|---------------------|---------------------|"
+                "---------------------|----------------------|----------|--------------------|\n"
+            )
+            for _, row in df.iterrows():
+                f.write(format_row(row) + "\n")
+
+        print(
+            f"\n💾 Markdown evaluation table saved to: {self.safe_relpath(output_path)}"
+        )
+
+    def to_training_pair(self, row):
+        sources = [row.get(f"Retrieved Source {i}", "") for i in range(1, 4)]
+        context = "\n".join(
+            [src for src in sources if isinstance(src, str) and src.strip()]
+        )
+        return {
+            "instruction": "Summarise the following complaint formally and concisely.",
+            "input": f"Question: {row['Question']}\nContext:\n{context}",
+            "output": row["Generated Answer"],
+        }
+
+    def convert_to_training_pairs(self, df, filename="complaint_response_pairs.jsonl"):
+        """Convert a DataFrame of complaints and responses into training pairs."""
+
+        # Ensure the column is numeric
+        df["Quality Score (1-5)"] = pd.to_numeric(
+            df["Quality Score (1-5)"], errors="coerce"
+        )
+
+        # Drop rows with NaN scores
+        df = df.dropna(subset=["Quality Score (1-5)"])
+
+        # Filter for high-quality responses
+        df = df[df["Quality Score (1-5)"] >= 3]
+
+        # Convert
+        pairs = [self.to_training_pair(row) for _, row in df.iterrows()]
+
+        # Save as JSONL
+        output_path = os.path.join(self.eval_dir, filename)
+        with open(output_path, "w", encoding="utf-8") as f:
+            for pair in pairs:
+                f.write(json.dumps(pair) + "\n")
+
+        print(
+            f"💾 Saved {len(pairs)} training pairs to {self.safe_relpath(output_path)}"
+        )
