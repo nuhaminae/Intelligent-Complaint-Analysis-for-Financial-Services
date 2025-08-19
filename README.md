@@ -100,6 +100,7 @@ The repository is organised as follows:
 ├── .dvc/                              # Data Version Control
 ├── .github/workflows                  # CI workflows
 ├── data/                              # Data files
+├── model/                             # Model files
 ├── notebooks/                         # Notebooks
 ├── plots/                             # Plots and charts for reporting
 ├── scripts/                           # Core scripts
@@ -186,6 +187,24 @@ dvc pull
 
       ```bash
       notebooks/04_rag_core_logic.ipynb
+      ```
+
+      - Run the fine-tuning notebook to improve the RAG model.
+
+      ```bash
+      notebooks/05_finetuning_rag.ipynb
+      ```
+
+      - Run the SHAP analysis notebook to explain model predictions.
+
+      ```bash
+      notebooks/06_shap_visualiser.ipynb
+      ```
+
+      - Run the business implications notebook to assess the impact of complaints on business metrics.
+
+      ```bash
+      notebooks/07_business_implications.ipynb
       ```
 
 3. **View curves**
