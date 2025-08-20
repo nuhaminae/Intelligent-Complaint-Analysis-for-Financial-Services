@@ -277,6 +277,41 @@ The distribution of chunk lengths for different product types reveals insights i
 
 ---
 
+### Business Exposure
+
+![Business_Exposure](plots/05_business_implication/Estimated%20Financial%20Exposure%20by%20Risk%20Category.png)
+
+Customer complaints are not just operational noise but are early signals of systemic risk. This project quantifies the **business exposure** tied to different complaint categories by estimating the potential financial impact of unresolved issues.
+
+**Business exposure** refers to the estimated financial liability a company faces due to recurring customer complaints. Each complaint type is mapped to a risk category (e.g., fraud, billing disputes), and assigned a cost estimate based on severity. By aggregating these across the dataset, we surface:
+
+- Which complaint types are most financially damaging
+- Where operational failures are costing the business most
+- How unresolved issues could escalate into regulatory or reputational risk
+
+**How It is Calculated**:
+
+1. **Fuzzy Matching**: Each complaint is mapped to a risk category using semantic similarity.
+2. **Cost Attribution**: Each category is assigned a dollar value based on estimated resolution cost or potential loss.
+3. **Exposure Aggregation**: Total exposure is calculated by multiplying complaint frequency by cost per category.
+
+#### Example
+
+- 1,000 complaints about identity theft × $800 = **$800,000 exposure**
+- 500 complaints about billing disputes × $100 = **$50,000 exposure**
+
+#### Why It is Valuable
+
+This analysis helps financial institutions:
+
+- Prioritize high-risk complaint categories for resolution
+- Justify investments in fraud detection, customer service, or dispute handling
+- Communicate risk clearly to non-technical stakeholders and regulators
+
+>Note: This analysis is based on approximated exposure cost and should be interpreted as indicative rather than definitive.
+
+---
+
 ### RAG Implementation
 
 - The evaluation of the RAG system was conducted using a set of predefined questions and manually scored answers.
