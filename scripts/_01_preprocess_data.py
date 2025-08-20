@@ -34,7 +34,6 @@ class EDA:
         if self.processed_dir is not None and not os.path.exists(self.processed_dir):
             os.makedirs(self.processed_dir)
 
-
         if self.df_path:
             self.load_df()
 
@@ -129,7 +128,7 @@ class EDA:
             y=product_counts.index,
             x=product_counts.values,
             hue=product_counts.index,
-            palette="Set1"
+            palette="Set1",
         )
         plt.title("Distribution of Complaints by Product")
         plt.xlabel("Number of Complaints")
@@ -164,7 +163,9 @@ class EDA:
 
         # Plot the distribution of complaint lengths
         plt.figure(figsize=(10, 4))
-        sns.histplot(self.df_raw["Complaint Length"], bins=50, kde=True, color="skyblue")
+        sns.histplot(
+            self.df_raw["Complaint Length"], bins=50, kde=True, color="skyblue"
+        )
         plt.title("Distribution of Complaint Lengths")
         plt.xlabel("Length of Complaint")
         plt.ylabel("Frequency")
@@ -210,7 +211,7 @@ class EDA:
             x=["With Narrative", "Without Narrative"],
             y=[with_narrative, without_narrative],
             hue=["With Narrative", "Without Narrative"],
-            palette="Set1"
+            palette="Set1",
         )
         plt.title("Complaints With vs. Without Narratives")
         plt.ylabel("Number of Complaints")
