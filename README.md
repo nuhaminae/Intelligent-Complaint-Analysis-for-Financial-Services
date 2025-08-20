@@ -99,13 +99,16 @@ The repository is organised as follows:
 ├── .chatvenv/                         # Virtual environment (not pushed)
 ├── .dvc/                              # Data Version Control
 ├── .github/workflows                  # CI workflows
+|   ...
 ├── data/                              # Data files
-├── model/                             # Model files
+├── model_finetuned_flant5_v1/         # Fine Tuned Model (not pushed)
 ├── notebooks/                         # Notebooks
 ├── plots/                             # Plots and charts for reporting
 ├── scripts/                           # Core scripts
 ├── tests/                             # Unit and pytest
+|   ...
 ├── .dvcignore                         # Ignore DVC files
+|   ...
 ├── .flake8                            # Flake8 configuration
 ├── .gitignore                         # Ignore unnecessary files
 ├── .pre-commit-config.yaml            # Pre-commit configuration
@@ -113,6 +116,7 @@ The repository is organised as follows:
 ├── .yamllint.yml                      # YAML lint configuration
 ├── app.py                             # Main Gradio application script
 ├── format.ps1                         # Formatting script
+|   ...
 ├── pyproject.toml                     # Project configuration
 ├── README.md                          # Project overview and setup instructions
 └── requirements.txt                   # Python package dependencies
