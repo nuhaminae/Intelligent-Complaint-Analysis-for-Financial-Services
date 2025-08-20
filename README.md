@@ -18,7 +18,7 @@ Intelligent Complaint Analysis for Financial Services is an advanced platform ta
 - Customisable text chunking strategy with overlap control.
 - SentenceTransformer embeddings using `all-MiniLM-L6-v2`.
 - Semantic search over ChromaDB with retrievable metadata.
-- Embedding via sentence-transformers/all-MiniLM-L6-v2.
+- Embedding via `sentence-transformers/all-MiniLM-L6-v2`.
 - RAG pipeline powered by LangChain with refined prompt engineering.
 - Interactive Gradio UI with real-time querying and context display.
 - Evaluation matrix with quality scores and commentary.
@@ -301,7 +301,7 @@ The distribution of chunk lengths for different product types reveals insights i
 
 ### Fine-Tuned model
 
-The fine tuned model had the following performance trajectory:
+The fine tuned model `model_finetuned_flant5_v1` had the following performance trajectory:
 
 | Epoch | Training Loss ↓  | Validation Loss ↓ | ROUGE-L ↑  | Interpretation                                                |
 |-------|------------------|-------------------|------------|---------------------------------------------------------------|
@@ -345,6 +345,12 @@ When we inspect the SHAP plot for the sample run:
 - The plot is telling us *which parts of the long complaint most directly influenced the exact phrasing of the summary*.
 
 > "The model decided that the most essential information was the customer service’s inability to assist. SHAP highlights that words related to ‘customer service’ and ‘could not help’ drove this decision, while transaction specifics and timeline details had negligible influence."
+
+### Gradio Integration
+
+- The Gradio interface allows users to interact with the model easily, providing a user-friendly way to input complaints and receive summaries.
+
+![Gif Demo](plots/04_dashboard_gif/gradio_chatbot_demo.gif)
 
 ---
 
