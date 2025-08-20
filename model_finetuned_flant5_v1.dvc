@@ -3,4 +3,4 @@ outs:
   size: 992799439
   nfiles: 7
   hash: md5
-  path: model
+  path: model_finetuned_flant5_v1
