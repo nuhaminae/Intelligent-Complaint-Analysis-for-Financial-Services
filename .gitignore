@@ -30,3 +30,4 @@ logs/
 
 vector store/
 /model
+/model_finetuned_flant5_v1
